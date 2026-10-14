@@ -1,26 +1,210 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-inter);
+  /* Xparience-Mobile Colors.primary100–950, plus the two logo tones. Fixed in both themes. */
+  --color-brand: #006989;
+  --color-brand-100: #e5f9ff;
+  --color-brand-200: #ccf3ff;
+  --color-brand-300: #99e7ff;
+  --color-brand-400: #66dbff;
+  --color-brand-500: #33cfff;
+  --color-brand-600: #009ccc;
+  --color-brand-700: #007599;
+  --color-brand-800: #004e66;
+  --color-brand-900: #002733;
+  --color-brand-950: #00141a;
+  --color-brand-sky: #87ceeb;
+  --color-brand-mint: #98ff98;
+  /* Status and badge colors from the dashboard Figma. Fixed in both themes. */
+  --color-success-strong: #006e20;
+  --color-success-soft: #e9faef;
+  --color-premium: #7329f0;
+  --color-premium-soft: #f1e8fe;
+  --color-attention: #ea580b;
+  --color-attention-soft: #fff9f6;
+  --color-attention-border: #ef4444;
+  --color-online: #22c55d;
+  --color-elite: #0b1736;
+  --color-outline: #6f787e;
+  /* The dashboard dialogs: their primary actions are a shade lighter than --primary. */
+  --color-action: #006481;
+  --color-action-icon: #297d9d;
+  --color-muted-strong: #e6e8eb;
+  --color-info-soft: #cae7f7;
+  /* The verification Figma: in-review slate, medium-risk amber, and soft tints. */
+  --color-review: #48626f;
+  --color-caution: #84500e;
+  --color-caution-soft: #f6f0e9;
+  --color-destructive-soft: #fff8f7;
+  --color-action-soft: #e9f2f5;
+  /* Warning and flag dialogs' icon tile; the suspend and reject dialogs' icon disc. */
+  --color-caution-accent: #a26727;
+  --color-destructive-container: #ffdad6;
+  /* M3 surface-container: tracks, header bands and tiles a step darker than muted. */
+  --color-container: #eceef1;
+  /* Lifted from the Figma's #516f7b (3.2:1 on the sidebar) to 4.7:1, as 11px text needs 4.5:1. */
+  --color-sidebar-label: #6e8b97;
+  --color-sidebar-subtle: #b2bcbf;
+  --color-surface: var(--surface);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Light values are sampled from the dashboard Figma screenshots (a Material 3
+ * style palette seeded from brand teal): on-surface #181c1e, on-surface-variant
+ * #3f484d, outline-variant #bfc8ce, surface #f7f9fc, surface-container
+ * #f2f4f7, primary #005069. The auth screens share them. --warning stays the
+ * darker amber that keeps the "Fair" label at 4.5:1.
+ */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.223 0.007 229.2);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.223 0.007 229.2);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.223 0.007 229.2);
+  --primary: oklch(0.402 0.078 227.5);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.966 0.005 258.3);
+  --secondary-foreground: oklch(0.223 0.007 229.2);
+  --muted: oklch(0.966 0.005 258.3);
+  --muted-foreground: oklch(0.395 0.014 232);
+  --accent: oklch(0.94 0.01 219.6);
+  --accent-foreground: oklch(0.223 0.007 229.2);
+  --destructive: oklch(0.506 0.193 27.7);
+  --success: oklch(0.627 0.17 149.2);
+  --warning: oklch(0.56 0.12 70.4);
+  --border: oklch(0.828 0.013 236.7);
+  --input: oklch(0.828 0.013 236.7);
+  --ring: oklch(0.486 0.094 227.8);
+  --surface: oklch(0.981 0.005 258.3);
+  --subtle-foreground: oklch(0.552 0.042 259.7);
+  --chart-1: oklch(0.402 0.078 227.5);
+  --chart-2: oklch(0.574 0.145 152.7);
+  --chart-3: oklch(0.532 0.258 293.2);
+  --chart-4: oklch(0.889 0.168 144.4);
+  --chart-5: oklch(0.485 0.086 224);
+  --radius: 0.625rem;
+  /* The sidebar is dark in both themes. */
+  --sidebar: oklch(0.222 0.041 223);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.486 0.094 227.8);
+  --sidebar-primary-foreground: oklch(0.89 0.064 232.9);
+  --sidebar-accent: oklch(0.486 0.094 227.8 / 35%);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.695 0.083 225.3);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.797 0.139 224.3);
+  --primary-foreground: oklch(0.253 0.047 223.5);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.735 0.136 159.3);
+  --warning: oklch(0.759 0.127 74.6);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.525 0.103 228.3);
+  --surface: oklch(0.186 0.01 220.1);
+  --subtle-foreground: oklch(0.711 0.035 256.8);
+  --chart-1: oklch(0.797 0.139 224.3);
+  --chart-2: oklch(0.735 0.136 159.3);
+  --chart-3: oklch(0.702 0.183 293.5);
+  --chart-4: oklch(0.889 0.168 144.4);
+  --chart-5: oklch(0.648 0.128 229);
+  --sidebar: oklch(0.222 0.041 223);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.486 0.094 227.8);
+  --sidebar-primary-foreground: oklch(0.89 0.064 232.9);
+  --sidebar-accent: oklch(0.486 0.094 227.8 / 35%);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.695 0.083 225.3);
+}
+
+/*
+ * The auth screens were matched to their own Figma frames, which use lighter
+ * borders, secondary text and tint than the dashboard palette above. Light
+ * mode only; in dark mode they use the shared dark tokens.
+ */
+:root:not(.dark) .auth-theme {
+  --border: oklch(0.927 0.008 228.9);
+  --input: oklch(0.911 0.009 225.1);
+  --muted-foreground: oklch(0.517 0.024 227.9);
+  --accent: oklch(0.959 0.009 214.3);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
 }
