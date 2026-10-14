@@ -1,0 +1,5 @@
+.next
+node_modules
+package-lock.json
+# shadcn-generated. Leave as the CLI writes them so `shadcn add` diffs stay clean.
+components/ui

@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Xparience Admin
 
-## Getting Started
+Internal admin console for Xparience: users, verification, matching, chat moderation, community and virtual dates. It runs on the same backend as the mobile app.
 
-First, run the development server:
+## Setup
+
+Requirements: Node ≥ 20.9 and npm.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # API_URL defaults to staging
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To sign in you need an account with the **Admin** or **Moderator** role. An existing admin can create one with `POST /admin/users/create-admin`, or can promote a user with `PATCH /admin/users/{id}/role`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script              | What it does                               |
+| ------------------- | ------------------------------------------ |
+| `npm run dev`       | Dev server (Turbopack)                     |
+| `npm run build`     | Production build                           |
+| `npm run start`     | Serve the production build                 |
+| `npm run lint`      | ESLint (Next core-web-vitals + TypeScript) |
+| `npm run typecheck` | Generate route types, then `tsc --noEmit`  |
+| `npm run format`    | Prettier with Tailwind class sorting       |
 
-## Learn More
+## Stack
 
-To learn more about Next.js, take a look at the following resources:
+Next.js 16 (App Router, React Compiler) · React 19 · TypeScript · Tailwind CSS v4 · shadcn/ui · TanStack Query · TanStack Table · Zustand · React Hook Form + Zod · nuqs · sonner · recharts · date-fns · lucide-react
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  (auth)/login/             sign-in page
+  (dashboard)/              signed-in area with the sidebar shell
+  api/auth/{login,logout}/  set and clear the httpOnly session cookies
+  api/backend/[...path]/    same-origin proxy to the backend; adds the bearer token
+actions/                    API calls, one file per domain
+hooks/api/                  React Query hooks over actions/
+libs/api/                   fetch client + ENDPOINTS map
+libs/auth/                  cookie session, token refresh
+libs/react-query/           QueryClient + cache keys
+providers/                  theme, query, nuqs, tooltip, toaster
+store/                      Zustand stores
+components/ui/              shadcn components (CLI-managed)
+proxy.ts                    redirects to /login when there's no session cookie
+```
 
-## Deploy on Vercel
+The browser never calls the backend directly. Requests go to `/api/backend/*`, and the server adds the token from an httpOnly cookie. This keeps tokens out of client JavaScript, and it means the backend doesn't need CORS enabled for the admin.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Add a shadcn component with:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx shadcn@latest add <component>
+```
