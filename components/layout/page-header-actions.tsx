@@ -14,6 +14,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FEATURES } from "@/constants/features";
 
 // Each preset ends today; the day counts include it.
 const PRESETS = {
@@ -37,8 +38,12 @@ function rangeLabel(preset: Preset, today: Date) {
   return `${from} - ${format(today, "MMM d, yyyy")}`;
 }
 
-/** The page header's date-range picker. UI only: the range filters nothing yet. */
+/** The page header's date-range picker. Hidden until the stats and list routes take a range. */
 export function DateRangeSelect() {
+  return FEATURES.dateRanges ? <DateRangePicker /> : null;
+}
+
+function DateRangePicker() {
   const [preset, setPreset] = useState<Preset>("mtd");
   // Dates are the viewer's local ones, so the server renders none (as in TodayDate).
   const label = useSyncExternalStore(
@@ -81,12 +86,13 @@ export function DateRangeSelect() {
   );
 }
 
-/** The page header's primary action. Without an onClick it says export isn't available yet. */
+/** The page header's primary action. Hidden until there's an export route. */
 export function ExportReportButton({
   onClick = () => toast("Report export isn't available yet"),
   className,
   ...props
 }: ComponentProps<typeof Button>) {
+  if (!FEATURES.exports) return null;
   return (
     <Button
       onClick={onClick}

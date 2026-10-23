@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FEATURES } from "@/constants/features";
 import type { AnnouncementAudience, VerificationRequest } from "@/types/dashboard";
 
 // Each action is its own white pill; the menu panel itself is invisible.
@@ -19,7 +20,8 @@ const pill = "h-12 w-61 gap-2.5 rounded-[12px] border bg-background pl-6 text-ba
 
 /**
  * The floating + in the bottom-right corner: a speed dial of admin shortcuts.
- * Two open dialogs (UI only); Suspend User goes to the Users page.
+ * Approve Verification opens its dialog and Suspend User goes to the Users page. Send
+ * Announcement is hidden until there's an announcement route.
  */
 export function QuickActionsFab({
   verificationRequest,
@@ -67,10 +69,12 @@ export function QuickActionsFab({
             {/* fill, not text color: the item recolors its children's text on focus. */}
             <SealCheckIcon aria-hidden weight="fill" className="size-6.5 fill-success" />
           </DropdownMenuItem>
-          <DropdownMenuItem className={pill} onSelect={() => setDialog("announcement")}>
-            Send Announcement
-            <MegaphoneIcon aria-hidden weight="fill" className="size-6 -scale-x-100" />
-          </DropdownMenuItem>
+          {FEATURES.announcements && (
+            <DropdownMenuItem className={pill} onSelect={() => setDialog("announcement")}>
+              Send Announcement
+              <MegaphoneIcon aria-hidden weight="fill" className="size-6 -scale-x-100" />
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild variant="destructive" className={pill}>
             <Link href="/users">
               Suspend User
@@ -84,11 +88,13 @@ export function QuickActionsFab({
         open={dialog === "verification"}
         onOpenChange={(open) => !open && closeDialog()}
       />
-      <AnnouncementDialog
-        audienceSizes={audienceSizes}
-        open={dialog === "announcement"}
-        onOpenChange={(open) => !open && closeDialog()}
-      />
+      {FEATURES.announcements && (
+        <AnnouncementDialog
+          audienceSizes={audienceSizes}
+          open={dialog === "announcement"}
+          onOpenChange={(open) => !open && closeDialog()}
+        />
+      )}
     </>
   );
 }

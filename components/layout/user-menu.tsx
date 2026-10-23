@@ -24,14 +24,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SAMPLE_ADMIN_AVATAR_URL } from "@/constants/dashboard-sample";
+import { enabled, type Feature } from "@/constants/features";
 import { SAMPLE_ADMIN_PROFILE } from "@/constants/settings-sample";
 import { useAuthStore } from "@/store/use-auth-store";
 
-const ACCOUNT_LINKS = [
+const ACCOUNT_LINKS: { label: string; href: string; icon: typeof UserIcon; feature?: Feature }[] = [
   { label: "My Profile", href: "/profile", icon: UserIcon },
   { label: "Account Settings", href: "/settings", icon: GearSixIcon },
   { label: "Security", href: "/settings/security", icon: ShieldIcon },
-  { label: "Notification Preferences", href: "/settings/notifications", icon: BellIcon },
+  {
+    label: "Notification Preferences",
+    href: "/settings/notifications",
+    icon: BellIcon,
+    feature: "notificationPreferences",
+  },
 ] as const;
 
 /**
@@ -102,7 +108,7 @@ export function UserMenu() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="m-0" />
           <DropdownMenuGroup className="px-2 pt-2 pb-3">
-            {ACCOUNT_LINKS.map(({ label, href, icon: Icon }) => (
+            {enabled(ACCOUNT_LINKS).map(({ label, href, icon: Icon }) => (
               <DropdownMenuItem
                 key={href}
                 asChild

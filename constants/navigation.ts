@@ -15,11 +15,14 @@ import {
   VerifiedUserIcon,
   WellbeingIcon,
 } from "@/components/icons/app-icons";
+import { enabled, type Feature } from "@/constants/features";
 
 export interface NavItem {
   title: string;
   href: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** Hidden while this feature is off. */
+  feature?: Feature;
 }
 
 export interface NavSection {
@@ -28,8 +31,8 @@ export interface NavSection {
   items: NavItem[];
 }
 
-/** The sidebar, in the dashboard Figma's order. */
-export const NAV_SECTIONS: NavSection[] = [
+/** Every sidebar section, in the dashboard Figma's order, hidden ones included. */
+const ALL_SECTIONS: NavSection[] = [
   { items: [{ title: "Dashboard", href: "/dashboard", icon: DashboardIcon }] },
   {
     label: "Users & Engagement",
@@ -40,16 +43,16 @@ export const NAV_SECTIONS: NavSection[] = [
       { title: "Conversations", href: "/conversations", icon: BubbleChatIcon },
       { title: "Virtual Dates", href: "/virtual-dates", icon: CalendarLoveIcon },
       { title: "Community", href: "/community", icon: UserMultipleIcon },
-      { title: "Well-being", href: "/well-being", icon: WellbeingIcon },
-      { title: "AI Center", href: "/ai-center", icon: PsychologyIcon },
+      { title: "Well-being", href: "/well-being", icon: WellbeingIcon, feature: "wellbeing" },
+      { title: "AI Center", href: "/ai-center", icon: PsychologyIcon, feature: "aiMetrics" },
       { title: "Reports & Safety", href: "/reports", icon: GavelIcon },
     ],
   },
   {
     label: "Business",
     items: [
-      { title: "Subscriptions", href: "/subscriptions", icon: SyncIcon },
-      { title: "Payments", href: "/payments", icon: PaymentsIcon },
+      { title: "Subscriptions", href: "/subscriptions", icon: SyncIcon, feature: "subscriptions" },
+      { title: "Payments", href: "/payments", icon: PaymentsIcon, feature: "payments" },
     ],
   },
   {
@@ -57,3 +60,9 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [{ title: "Analytics", href: "/analytics", icon: LeaderboardIcon }],
   },
 ];
+
+/** The sidebar: sections whose items are all hidden drop out with their label. */
+export const NAV_SECTIONS: NavSection[] = ALL_SECTIONS.map((section) => ({
+  ...section,
+  items: enabled(section.items),
+})).filter((section) => section.items.length > 0);
