@@ -13,6 +13,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
+    "api:types": "node scripts/generate-api-types.mjs",
     "format:check": "prettier --check ."
   },
   "dependencies": {
