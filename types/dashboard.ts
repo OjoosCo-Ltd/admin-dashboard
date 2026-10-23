@@ -3,6 +3,7 @@
  * Figma, not on API responses. The /admin/dashboard/* routes are untyped
  * (see actions/dashboard-actions.ts); map them onto these when they're wired.
  */
+import type { Feature } from "@/constants/features";
 
 /** Color family of a headline KPI: its icon tile, sparkline and trend. */
 export type KpiTone =
@@ -10,6 +11,8 @@ export type KpiTone =
 
 export interface KpiStat {
   id: string;
+  /** Hidden while this feature is off (filter the row with `enabled`). */
+  feature?: Feature;
   label: string;
   value: number;
   /** Percent change, e.g. 8.3 for +8.3%. */
@@ -28,6 +31,8 @@ export interface KpiStat {
 /** The second row of smaller cards. `tone` colors the note; attention highlights the card. */
 export interface OpsMetric {
   id: "revenue" | "ai-match" | "virtual-dates" | "pending-verifications";
+  /** Hidden while this feature is off (filter the row with `enabled`). */
+  feature?: Feature;
   label: string;
   value: string;
   note: string;

@@ -1,3 +1,5 @@
+import type { Feature } from "@/constants/features";
+
 /**
  * A figure for the compact KPI card (components/dashboard/compact-kpi-card.tsx),
  * the row the verification, conversations and matches Figmas share.
@@ -5,6 +7,8 @@
  */
 export interface CompactKpi {
   id: string;
+  /** Hidden while this feature is off (filter the row with `enabled`). */
+  feature?: Feature;
   label: string;
   /** Formatted for display: "142", "4.2m", "84.2k". */
   value: string;
