@@ -4,9 +4,9 @@ import {
   getDashboardOverviewAction,
   getEngagementAction,
   getUserGrowthAction,
-  type StatsRange,
 } from "@/actions/dashboard-actions";
 import { queryKeys } from "@/libs/react-query/query-client";
+import type { EngagementAnalyticsQuery, UserGrowthQuery } from "@/types/api-dtos";
 
 export function useDashboardOverview() {
   return useQuery({
@@ -15,16 +15,16 @@ export function useDashboardOverview() {
   });
 }
 
-export function useUserGrowth(params: StatsRange = {}) {
+export function useUserGrowth(query: UserGrowthQuery = {}) {
   return useQuery({
-    queryKey: queryKeys.dashboard.userGrowth(params),
-    queryFn: () => getUserGrowthAction(params),
+    queryKey: queryKeys.dashboard.userGrowth(query),
+    queryFn: () => getUserGrowthAction(query),
   });
 }
 
-export function useEngagement(params: StatsRange & { days?: number } = {}) {
+export function useEngagement(query: EngagementAnalyticsQuery = {}) {
   return useQuery({
-    queryKey: queryKeys.dashboard.engagement(params),
-    queryFn: () => getEngagementAction(params),
+    queryKey: queryKeys.dashboard.engagement(query),
+    queryFn: () => getEngagementAction(query),
   });
 }
