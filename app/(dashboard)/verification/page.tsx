@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -11,6 +12,7 @@ import { TopModeratorsCard } from "@/components/verification/top-moderators-card
 import { VerificationKpiRow } from "@/components/verification/verification-kpi-row";
 import { VerificationQueue } from "@/components/verification/verification-queue";
 import { VerificationTrendsCard } from "@/components/verification/verification-trends-card";
+import { FEATURES } from "@/constants/features";
 import {
   SAMPLE_APPROVAL_DISTRIBUTION,
   SAMPLE_FRAUD_SIGNALS,
@@ -44,9 +46,18 @@ export default function VerificationPage() {
         <VerificationTrendsCard data={SAMPLE_VERIFICATION_TRENDS} className="xl:col-span-2" />
         <ApprovalDistributionCard data={SAMPLE_APPROVAL_DISTRIBUTION} />
       </div>
-      <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <FraudSummaryCard signals={SAMPLE_FRAUD_SIGNALS} className="md:col-span-2" />
-        <GlobalReachCard />
+      {/* Without the map, the fraud summary and Top Moderators split the row as the charts above do. */}
+      <div
+        className={cn(
+          "grid items-start gap-6",
+          FEATURES.geoBreakdown ? "md:grid-cols-2 xl:grid-cols-4" : "xl:grid-cols-3",
+        )}
+      >
+        <FraudSummaryCard
+          signals={SAMPLE_FRAUD_SIGNALS}
+          className={FEATURES.geoBreakdown ? "md:col-span-2" : "xl:col-span-2"}
+        />
+        {FEATURES.geoBreakdown && <GlobalReachCard />}
         <TopModeratorsCard moderators={SAMPLE_TOP_MODERATORS} />
       </div>
     </>

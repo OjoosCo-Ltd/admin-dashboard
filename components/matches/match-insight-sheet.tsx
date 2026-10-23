@@ -11,6 +11,7 @@ import { ExcludeMatchingDialog } from "@/components/matches/exclude-matching-dia
 import { FlagMatchDialog } from "@/components/matches/flag-match-dialog";
 import { ParticipantAvatar } from "@/components/dashboard/pair-avatars";
 import { RemoveMatchDialog } from "@/components/matches/remove-match-dialog";
+import { FEATURES } from "@/constants/features";
 import type { MatchDetail } from "@/types/matches";
 
 const moment = new Intl.DateTimeFormat("en-US", {
@@ -68,20 +69,22 @@ export function MatchInsightSheet({
           <>
             <InsightBody match={match} />
             <div className="shrink-0 border-t px-6 py-6">
-              <div className="grid grid-cols-2 gap-3.5">
-                <FlagMatchDialog
-                  match={match}
-                  {...nestedProps("flag")}
-                  trigger={
-                    <button
-                      type="button"
-                      className="flex h-14 items-center justify-center gap-2.5 rounded-md border border-destructive/40 bg-background text-base text-destructive transition-colors outline-none hover:bg-destructive/5 focus-visible:ring-3 focus-visible:ring-ring/50"
-                    >
-                      <FlagIcon aria-hidden weight="bold" className="size-5" />
-                      Flag for Review
-                    </button>
-                  }
-                />
+              <div className={cn("grid gap-3.5", FEATURES.matchFlags && "grid-cols-2")}>
+                {FEATURES.matchFlags && (
+                  <FlagMatchDialog
+                    match={match}
+                    {...nestedProps("flag")}
+                    trigger={
+                      <button
+                        type="button"
+                        className="flex h-14 items-center justify-center gap-2.5 rounded-md border border-destructive/40 bg-background text-base text-destructive transition-colors outline-none hover:bg-destructive/5 focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        <FlagIcon aria-hidden weight="bold" className="size-5" />
+                        Flag for Review
+                      </button>
+                    }
+                  />
+                )}
                 <RemoveMatchDialog
                   match={match}
                   {...nestedProps("remove")}
@@ -96,18 +99,20 @@ export function MatchInsightSheet({
                   }
                 />
               </div>
-              <ExcludeMatchingDialog
-                match={match}
-                {...nestedProps("exclude")}
-                trigger={
-                  <button
-                    type="button"
-                    className="mt-3 flex h-14 w-full items-center justify-center rounded-md border border-outline bg-background text-base transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
-                  >
-                    Exclude Future Matching
-                  </button>
-                }
-              />
+              {FEATURES.matchExclusion && (
+                <ExcludeMatchingDialog
+                  match={match}
+                  {...nestedProps("exclude")}
+                  trigger={
+                    <button
+                      type="button"
+                      className="mt-3 flex h-14 w-full items-center justify-center rounded-md border border-outline bg-background text-base transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      Exclude Future Matching
+                    </button>
+                  }
+                />
+              )}
             </div>
           </>
         )}

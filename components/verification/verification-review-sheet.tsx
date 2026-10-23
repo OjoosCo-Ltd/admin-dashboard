@@ -19,6 +19,7 @@ import {
   type ScoreBand,
   scoreBand,
 } from "@/components/verification/verification-styles";
+import { FEATURES } from "@/constants/features";
 import type { CaseEvent, VerificationCase, VerificationDocument } from "@/types/verification";
 
 const CHECK_STYLES: Record<ScoreBand, { bar: string; text: string }> = {
@@ -111,9 +112,13 @@ function SheetContents({
             Case #{verification.caseId} • Submitted {verification.submitted}
           </DialogPrimitive.Description>
           {/* On phones the pill drops under the title, which keeps the width to wrap. */}
-          <p className={cn(priorityClass, "mt-2 sm:hidden")}>Priority: {risk.label}</p>
+          {FEATURES.verificationRisk && (
+            <p className={cn(priorityClass, "mt-2 sm:hidden")}>Priority: {risk.label}</p>
+          )}
         </div>
-        <p className={cn(priorityClass, "max-sm:hidden")}>Priority: {risk.label}</p>
+        {FEATURES.verificationRisk && (
+          <p className={cn(priorityClass, "max-sm:hidden")}>Priority: {risk.label}</p>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-10">
@@ -186,7 +191,7 @@ function SheetContents({
 
         <section className="mt-10">
           <ActionDialogLabel asChild>
-            <h3>History &amp; Notes</h3>
+            <h3>{FEATURES.verificationNotes ? "History & Notes" : "History"}</h3>
           </ActionDialogLabel>
           <ol className="mt-4">
             {verification.history.map((event, index) => (
@@ -210,33 +215,44 @@ function SheetContents({
               </li>
             ))}
           </ol>
-          <label htmlFor={noteId} className="sr-only">
-            Moderator note
-          </label>
-          <Textarea
-            id={noteId}
-            placeholder="Add a moderator note..."
-            className="mt-4 min-h-26 resize-none rounded-lg border-border/40 bg-muted px-3 py-4.5 text-[13px] placeholder:text-[#6b7280] md:text-[13px] dark:border-border"
-          />
+          {FEATURES.verificationNotes && (
+            <>
+              <label htmlFor={noteId} className="sr-only">
+                Moderator note
+              </label>
+              <Textarea
+                id={noteId}
+                placeholder="Add a moderator note..."
+                className="mt-4 min-h-26 resize-none rounded-lg border-border/40 bg-muted px-3 py-4.5 text-[13px] placeholder:text-[#6b7280] md:text-[13px] dark:border-border"
+              />
+            </>
+          )}
         </section>
       </div>
 
       {/* Not in the Figma: the frames show the dialogs but not the buttons that open them. */}
-      <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-border/30 px-6 py-4 sm:grid-cols-3 dark:border-border">
-        {/* The two dialogs render their buttons as triggers, so closing one returns focus here. */}
-        <RequestDocumentsDialog
-          verification={verification}
-          open={decision === "request"}
-          onOpenChange={(open) => onDecisionChange(open ? "request" : null)}
-          trigger={
-            <Button
-              variant="outline"
-              className="col-span-2 h-12 rounded-[10px] bg-background px-3 text-[15px] font-semibold text-muted-foreground sm:col-span-1"
-            >
-              Request Documents
-            </Button>
-          }
-        />
+      <div
+        className={cn(
+          "grid shrink-0 grid-cols-2 gap-3 border-t border-border/30 px-6 py-4 dark:border-border",
+          FEATURES.verificationResubmission && "sm:grid-cols-3",
+        )}
+      >
+        {/* The dialogs render their buttons as triggers, so closing one returns focus here. */}
+        {FEATURES.verificationResubmission && (
+          <RequestDocumentsDialog
+            verification={verification}
+            open={decision === "request"}
+            onOpenChange={(open) => onDecisionChange(open ? "request" : null)}
+            trigger={
+              <Button
+                variant="outline"
+                className="col-span-2 h-12 rounded-[10px] bg-background px-3 text-[15px] font-semibold text-muted-foreground sm:col-span-1"
+              >
+                Request Documents
+              </Button>
+            }
+          />
+        )}
         <RejectVerificationDialog
           name={verification.name}
           open={decision === "reject"}

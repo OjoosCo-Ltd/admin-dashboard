@@ -31,6 +31,7 @@ import {
   scoreBand,
   STATUS_STYLES,
 } from "@/components/verification/verification-styles";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import { initials } from "@/libs/utils";
 import type { VerificationStatus } from "@/types/api";
 import type { VerificationCase } from "@/types/verification";
@@ -52,18 +53,21 @@ type StatusFilter = (typeof STATUS_FILTERS)[number];
 const isStatusFilter = (value: string): value is StatusFilter =>
   (STATUS_FILTERS as readonly string[]).includes(value);
 
-// Widths from the Figma's 1,106px table. They're targets: a column still
-// grows to fit its content, and the table scrolls sideways when it can't fit.
-const COLUMNS = [
-  { label: "User", width: "w-[16.7%]" },
-  { label: "Govt ID Type", width: "w-[11.05%]" },
-  { label: "Face Match", width: "w-[14.2%]" },
-  { label: "Country", width: "w-[11%]" },
-  { label: "Risk Level", width: "w-[10.45%]" },
-  { label: "Status", width: "w-[11.75%]" },
-  { label: "Reviewer", width: "w-[11.15%]" },
-  { label: "Actions", width: "w-[13.7%]" },
-];
+// Widths, in percent, from the Figma's 1,106px table. They're targets: a column
+// still grows to fit its content, and the table scrolls sideways when it can't fit.
+const COLUMNS = enabled<{ label: string; width: number; feature?: Feature }>([
+  { label: "User", width: 16.7 },
+  { label: "Govt ID Type", width: 11.05 },
+  { label: "Face Match", width: 14.2 },
+  { label: "Country", width: 11 },
+  { label: "Risk Level", width: 10.45, feature: "verificationRisk" },
+  { label: "Status", width: 11.75 },
+  { label: "Reviewer", width: 11.15 },
+  { label: "Actions", width: 13.7 },
+]);
+
+// A hidden column's share goes to the others, in proportion.
+const TOTAL_WIDTH = COLUMNS.reduce((sum, column) => sum + column.width, 0);
 
 const SCORE_STYLES: Record<ScoreBand, { bar: string; text: string }> = {
   pass: { bar: "bg-action dark:bg-primary", text: "text-action dark:text-primary" },
@@ -196,10 +200,16 @@ export function VerificationQueue({
         </div>
       </div>
 
-      <Table aria-labelledby={titleId} className="min-w-230">
+      <Table
+        aria-labelledby={titleId}
+        className={FEATURES.verificationRisk ? "min-w-230" : "min-w-206"}
+      >
         <colgroup>
           {COLUMNS.map((column) => (
-            <col key={column.label} className={column.width} />
+            <col
+              key={column.label}
+              style={{ width: `${((column.width / TOTAL_WIDTH) * 100).toFixed(2)}%` }}
+            />
           ))}
         </colgroup>
         <TableHeader className="[&_tr]:border-b-0">
@@ -262,16 +272,18 @@ export function VerificationQueue({
                   </div>
                 </TableCell>
                 <TableCell className={cn(cell, "text-sm text-foreground")}>{row.country}</TableCell>
-                <TableCell className={cell}>
-                  <span
-                    className={cn(
-                      "inline-flex h-5 items-center rounded-full px-2 text-[11px] font-bold tracking-wide uppercase",
-                      RISK_STYLES[row.risk].className,
-                    )}
-                  >
-                    {RISK_STYLES[row.risk].label}
-                  </span>
-                </TableCell>
+                {FEATURES.verificationRisk && (
+                  <TableCell className={cell}>
+                    <span
+                      className={cn(
+                        "inline-flex h-5 items-center rounded-full px-2 text-[11px] font-bold tracking-wide uppercase",
+                        RISK_STYLES[row.risk].className,
+                      )}
+                    >
+                      {RISK_STYLES[row.risk].label}
+                    </span>
+                  </TableCell>
+                )}
                 <TableCell className={cell}>
                   <span
                     className={cn(

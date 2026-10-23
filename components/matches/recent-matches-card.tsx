@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FEATURES } from "@/constants/features";
 import type { MatchDetail, MatchStatusFilter } from "@/types/matches";
 
 const PAGE_SIZE = 10;
@@ -241,7 +242,7 @@ function RecentMatchesView({
                   </span>
                 </TableCell>
                 <TableCell className={cn(edges, "py-6 text-center")}>
-                  {match.status === "reported" ? (
+                  {FEATURES.matchFlags && match.status === "reported" ? (
                     <button
                       type="button"
                       aria-label={`Review reported match #${match.publicId}`}
@@ -286,7 +287,7 @@ function RecentMatchesView({
   );
 }
 
-/** A row's ⋮ menu: the insight sheet and the three moderation actions. */
+/** A row's ⋮ menu: the insight sheet and the moderation actions. */
 function RowMenu({ match, onAction }: { match: MatchDetail; onAction: CardProps["onAction"] }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   // Set when an item opens a sheet or dialog: that takes focus, so the menu mustn't take it back.
@@ -318,10 +319,14 @@ function RowMenu({ match, onAction }: { match: MatchDetail; onAction: CardProps[
         }}
       >
         <DropdownMenuItem onSelect={() => select("insight")}>View match insight</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => select("flag")}>Flag for review</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => select("exclude")}>
-          Exclude future matching
-        </DropdownMenuItem>
+        {FEATURES.matchFlags && (
+          <DropdownMenuItem onSelect={() => select("flag")}>Flag for review</DropdownMenuItem>
+        )}
+        {FEATURES.matchExclusion && (
+          <DropdownMenuItem onSelect={() => select("exclude")}>
+            Exclude future matching
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => select("remove")}>
           Remove match

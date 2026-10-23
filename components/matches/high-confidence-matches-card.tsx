@@ -15,15 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { MatchDetail } from "@/types/matches";
 
-const COLUMNS = [
-  { label: "Match ID", width: "w-[16%]" },
-  { label: "Pairs", width: "w-[17%]" },
-  { label: "Compatibility", width: "w-[30%]" },
-  { label: "AI Confidence", width: "w-[22%]" },
-  { label: "Actions", width: "w-[15%]", align: "text-right" },
-];
+/** Widths in percent. */
+const COLUMNS = enabled<{ label: string; width: number; align?: string; feature?: Feature }>([
+  { label: "Match ID", width: 16 },
+  { label: "Pairs", width: 17 },
+  { label: "Compatibility", width: 30 },
+  { label: "AI Confidence", width: 22, feature: "aiMetrics" },
+  { label: "Actions", width: 15, align: "text-right" },
+]);
+
+// A hidden column's share goes to the others, in proportion.
+const TOTAL_WIDTH = COLUMNS.reduce((sum, column) => sum + column.width, 0);
 
 const confidence = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 
@@ -53,10 +58,13 @@ export function HighConfidenceMatchesCard({
           View All
         </a>
       </div>
-      <Table aria-labelledby={titleId} className="min-w-140">
+      <Table aria-labelledby={titleId} className={FEATURES.aiMetrics ? "min-w-140" : "min-w-110"}>
         <colgroup>
           {COLUMNS.map((column) => (
-            <col key={column.label} className={column.width} />
+            <col
+              key={column.label}
+              style={{ width: `${((column.width / TOTAL_WIDTH) * 100).toFixed(2)}%` }}
+            />
           ))}
         </colgroup>
         <TableHeader className="[&_tr]:border-b-0">
@@ -100,11 +108,13 @@ export function HighConfidenceMatchesCard({
                   <span className="text-[13px] font-bold tabular-nums">{match.compatibility}%</span>
                 </span>
               </TableCell>
-              <TableCell className="px-3 py-6">
-                <span className="inline-block max-w-23 rounded bg-green-100 px-1.5 py-1 text-[11px]/5 font-bold tracking-wide whitespace-normal text-green-700 uppercase dark:bg-success/15 dark:text-success">
-                  {confidence.format(match.aiConfidence)}% AI certainty
-                </span>
-              </TableCell>
+              {FEATURES.aiMetrics && (
+                <TableCell className="px-3 py-6">
+                  <span className="inline-block max-w-23 rounded bg-green-100 px-1.5 py-1 text-[11px]/5 font-bold tracking-wide whitespace-normal text-green-700 uppercase dark:bg-success/15 dark:text-success">
+                    {confidence.format(match.aiConfidence)}% AI certainty
+                  </span>
+                </TableCell>
+              )}
               <TableCell className="py-6 pr-6 pl-3 text-right">
                 <button
                   type="button"

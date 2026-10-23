@@ -12,6 +12,7 @@ import {
   RecentMatchesFallback,
 } from "@/components/matches/recent-matches-card";
 import { RemoveMatchDialog } from "@/components/matches/remove-match-dialog";
+import { FEATURES } from "@/constants/features";
 import type { MatchDetail } from "@/types/matches";
 
 /**
@@ -84,7 +85,7 @@ export function MatchReview({
         onOpenChange={setInsightOpen}
         returnFocusRef={openerRef}
       />
-      {dialog?.action === "flag" && (
+      {FEATURES.matchFlags && dialog?.action === "flag" && (
         <FlagMatchDialog
           match={dialog.match}
           open={dialogOpen}
@@ -98,7 +99,7 @@ export function MatchReview({
           onOpenChange={(open) => !open && closeDialog()}
         />
       )}
-      {dialog?.action === "exclude" && (
+      {FEATURES.matchExclusion && dialog?.action === "exclude" && (
         <ExcludeMatchingDialog
           match={dialog.match}
           open={dialogOpen}
