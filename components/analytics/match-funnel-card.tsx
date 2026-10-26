@@ -10,12 +10,13 @@ import {
 } from "@/components/analytics/analytics-format";
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { enabled } from "@/constants/features";
 import type { FunnelStage } from "@/types/analytics";
 
 /** Whole percents from 10% up and one decimal below, as the Figma prints them. */
 const formatShare = (share: number) => formatPercent(share, share < 10 ? 1 : 0);
 
-/** The five stages of last month's matches, from generated to a virtual date. */
+/** Last month's matches, stage by stage from generated to a virtual date. */
 export function MatchFunnelCard({
   stages,
   className,
@@ -23,9 +24,10 @@ export function MatchFunnelCard({
   stages: FunnelStage[];
   className?: string;
 }) {
-  const generated = stages[0]?.count ?? 0;
-  const rows = stages.map((stage, index) => {
-    const previous = index > 0 ? stages[index - 1] : undefined;
+  const shown = enabled(stages);
+  const generated = shown[0]?.count ?? 0;
+  const rows = shown.map((stage, index) => {
+    const previous = index > 0 ? shown[index - 1] : undefined;
     return {
       ...stage,
       share: generated ? (stage.count / generated) * 100 : 0,

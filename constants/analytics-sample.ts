@@ -61,6 +61,7 @@ export const SAMPLE_ANALYTICS_KPIS: AnalyticsKpi[] = [
   },
   {
     id: "revenue",
+    feature: "payments",
     label: "Revenue",
     value: formatCompactMoney(82_400),
     change: { label: "0.8%", direction: "up", favorable: true, comparison: monthly },
@@ -100,7 +101,7 @@ export const SAMPLE_ALGORITHM: AlgorithmPerformance = {
 /** The last 30 days. */
 export const SAMPLE_MATCH_FUNNEL: FunnelStage[] = [
   { id: "generated", label: "Generated Matches", count: 1_200_000 },
-  { id: "viewed", label: "Viewed Profiles", count: 984_000 },
+  { id: "viewed", label: "Viewed Profiles", count: 984_000, feature: "profileViews" },
   { id: "accepted", label: "Accepted", count: 540_000 },
   { id: "conversation", label: "Conversation", count: 264_000 },
   { id: "virtual-date", label: "Virtual Date", count: 57_000 },

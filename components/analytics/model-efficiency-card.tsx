@@ -2,6 +2,7 @@ import { cn } from "cn";
 
 import { formatPercent, HAIRLINE_CARD } from "@/components/analytics/analytics-format";
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
+import { FEATURES } from "@/constants/features";
 import type { ModelEfficiency } from "@/types/analytics";
 
 const STATUS: Record<ModelEfficiency["status"], { label: string; className: string }> = {
@@ -19,7 +20,10 @@ const STATUS: Record<ModelEfficiency["status"], { label: string; className: stri
   },
 };
 
-/** The matching model's accuracy, its week-on-week change, and which model is live. */
+/**
+ * The matching model's accuracy, its week-on-week change, and which model is
+ * live. The model and its status wait on AI metrics: no route names them.
+ */
 export function ModelEfficiencyCard({
   model,
   className,
@@ -62,24 +66,32 @@ export function ModelEfficiencyCard({
         </p>
       </div>
 
-      {/* The bottom margin keeps the footer's divider off the text where the card isn't stretched. */}
-      <p className="mt-5.5 mb-6 max-w-50 text-sm leading-5 text-muted-foreground">
+      {/* The bottom margin keeps the footer's divider off the text where the card isn't stretched.
+          Without the footer, the description takes its place at the foot of the card. */}
+      <p
+        className={cn(
+          "max-w-50 text-sm leading-5 text-muted-foreground",
+          FEATURES.aiMetrics ? "mt-5.5 mb-6" : "mt-auto pt-5.5",
+        )}
+      >
         {model.description}
       </p>
 
-      <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/20 pt-6 dark:border-border">
-        <p className="max-w-36 text-xs leading-4 font-semibold text-outline dark:text-muted-foreground">
-          Model {model.model}
-        </p>
-        <span
-          className={cn(
-            "shrink-0 rounded-sm px-2 py-1 text-[11px] leading-4 font-bold tracking-wide uppercase",
-            status.className,
-          )}
-        >
-          {status.label}
-        </span>
-      </div>
+      {FEATURES.aiMetrics && (
+        <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/20 pt-6 dark:border-border">
+          <p className="max-w-36 text-xs leading-4 font-semibold text-outline dark:text-muted-foreground">
+            Model {model.model}
+          </p>
+          <span
+            className={cn(
+              "shrink-0 rounded-sm px-2 py-1 text-[11px] leading-4 font-bold tracking-wide uppercase",
+              status.className,
+            )}
+          >
+            {status.label}
+          </span>
+        </div>
+      )}
     </DashboardCard>
   );
 }

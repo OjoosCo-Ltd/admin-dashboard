@@ -1,3 +1,4 @@
+import type { Feature } from "@/constants/features";
 import type { CompactKpi } from "@/types/kpi";
 
 // ⚠️ PROVISIONAL: modeled on the Analytics Figma. GET /admin/dashboard/* is
@@ -51,6 +52,8 @@ export interface FunnelStage {
   id: FunnelStageId;
   label: string;
   count: number;
+  /** The capability the stage waits on, while the backend can't count it. */
+  feature?: Feature;
 }
 
 export interface ModelEfficiency {

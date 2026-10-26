@@ -13,6 +13,7 @@ import {
   HAIRLINE_CARD,
 } from "@/components/analytics/analytics-format";
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
+import { FEATURES } from "@/constants/features";
 import type { TrustMetrics } from "@/types/analytics";
 
 /** What the Security Status panel says for each state: an icon and words, never the color alone. */
@@ -34,12 +35,18 @@ const STATUS: Record<TrustMetrics["status"], { label: string; icon: Icon; classN
   },
 };
 
-/** Verification, reports and fraud at a glance, with the platform's security status. */
+/**
+ * Verification, reports and fraud at a glance, with the platform's security
+ * status once a route reports it. `spansRow` keeps the metrics side by side at
+ * every width from lg, for when nothing sits beside the card.
+ */
 export function AnalyticsTrustCard({
   trust,
+  spansRow = false,
   className,
 }: {
   trust: TrustMetrics;
+  spansRow?: boolean;
   className?: string;
 }) {
   const metrics: { id: string; label: string; value: string; icon: Icon; tile: string }[] = [
@@ -73,7 +80,7 @@ export function AnalyticsTrustCard({
         Trust &amp; Safety
       </DashboardCardTitle>
       {/* Below xl the card spans the row, so the metrics share it rather than stack at its left. */}
-      <dl className="mt-6 grid gap-6 lg:grid-cols-3 xl:grid-cols-1">
+      <dl className={cn("mt-6 grid gap-6 lg:grid-cols-3", !spansRow && "xl:grid-cols-1")}>
         {metrics.map((metric) => (
           // The tile sits inside the <dt>, positioned against the row, because a <dl>'s
           // groups may hold only <dt>s and <dd>s.
@@ -94,15 +101,19 @@ export function AnalyticsTrustCard({
           </div>
         ))}
       </dl>
-      <div className="mt-6 rounded-xl bg-container p-4 dark:bg-muted">
-        <h3 className="text-[10px]/4 font-semibold text-muted-foreground uppercase">
-          Security Status
-        </h3>
-        <p className={cn("mt-2 flex items-center gap-2 text-sm/5 font-semibold", status.className)}>
-          <status.icon aria-hidden weight="bold" className="size-3 shrink-0" />
-          {status.label}
-        </p>
-      </div>
+      {FEATURES.securityStatus && (
+        <div className="mt-6 rounded-xl bg-container p-4 dark:bg-muted">
+          <h3 className="text-[10px]/4 font-semibold text-muted-foreground uppercase">
+            Security Status
+          </h3>
+          <p
+            className={cn("mt-2 flex items-center gap-2 text-sm/5 font-semibold", status.className)}
+          >
+            <status.icon aria-hidden weight="bold" className="size-3 shrink-0" />
+            {status.label}
+          </p>
+        </div>
+      )}
     </DashboardCard>
   );
 }

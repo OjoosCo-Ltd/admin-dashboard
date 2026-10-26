@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import type { Metadata } from "next";
 
 import { AnalyticsInsightsCard } from "@/components/analytics/analytics-insights-card";
@@ -16,6 +17,7 @@ import { UserTiersCard } from "@/components/analytics/user-tiers-card";
 import { DashboardExportButton } from "@/components/dashboard/dashboard-export-button";
 import { PageHeader } from "@/components/layout/page-header";
 import { DateRangeSelect } from "@/components/layout/page-header-actions";
+import { FEATURES } from "@/constants/features";
 import {
   SAMPLE_ALGORITHM,
   SAMPLE_ANALYTICS_EVENTS,
@@ -36,14 +38,26 @@ import {
 
 export const metadata: Metadata = { title: "Analytics" };
 
+// The description names only what the page shows: revenue comes from the
+// Revenue KPI (payments) and Subscription Revenue (subscriptions).
+const TOPICS = [
+  "user growth",
+  "engagement",
+  "matchmaking performance",
+  (FEATURES.payments || FEATURES.subscriptions) && "revenue",
+  "the overall health of the Xparience platform",
+].filter((topic) => typeof topic === "string");
+
 // UI only: the Figma's sample figures. GET /admin/dashboard/* is the nearest
-// backend source, and it isn't typed or wired yet.
+// backend source, and it isn't typed or wired yet. Cards with no backend
+// source wait on their feature flag; the rows close up around them.
 export default function AnalyticsPage() {
+  const sideCards = FEATURES.insights && FEATURES.auditLog;
   return (
     <>
       <PageHeader
         title="Analytics"
-        description="Understand user growth, engagement, matchmaking performance, revenue, and the overall health of the Xparience platform."
+        description={`Understand ${new Intl.ListFormat("en-US").format(TOPICS)}.`}
         descriptionClassName="text-pretty xl:max-w-160"
       >
         <DateRangeSelect />
@@ -60,18 +74,33 @@ export default function AnalyticsPage() {
         <CompatibilityCard data={SAMPLE_COMPATIBILITY} />
       </div>
       <EngagementStatsRow stats={SAMPLE_ENGAGEMENT_STATS} />
-      <div className="grid items-stretch gap-6 lg:grid-cols-2">
-        <SubscriptionRevenueCard data={SAMPLE_SUBSCRIPTION_REVENUE} />
-        <UserTiersCard tiers={SAMPLE_USER_TIERS} />
-      </div>
-      <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <GeographicCard countries={SAMPLE_COUNTRIES} />
-        <AnalyticsTrustCard trust={SAMPLE_TRUST} />
-      </div>
-      <div className="grid items-stretch gap-6 xl:grid-cols-4">
-        <AnalyticsInsightsCard insights={SAMPLE_ANALYTICS_INSIGHTS} className="xl:col-span-3" />
-        <RecentEventsCard events={SAMPLE_ANALYTICS_EVENTS} now={SAMPLE_ANALYTICS_NOW} />
-      </div>
+      {FEATURES.subscriptions && (
+        <div className="grid items-stretch gap-6 lg:grid-cols-2">
+          <SubscriptionRevenueCard data={SAMPLE_SUBSCRIPTION_REVENUE} />
+          <UserTiersCard tiers={SAMPLE_USER_TIERS} />
+        </div>
+      )}
+      {FEATURES.geoBreakdown ? (
+        <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <GeographicCard countries={SAMPLE_COUNTRIES} />
+          <AnalyticsTrustCard trust={SAMPLE_TRUST} />
+        </div>
+      ) : (
+        <AnalyticsTrustCard trust={SAMPLE_TRUST} spansRow />
+      )}
+      {(FEATURES.insights || FEATURES.auditLog) && (
+        <div className={cn("grid items-stretch gap-6", sideCards && "xl:grid-cols-4")}>
+          {FEATURES.insights && (
+            <AnalyticsInsightsCard
+              insights={SAMPLE_ANALYTICS_INSIGHTS}
+              className={cn(sideCards && "xl:col-span-3")}
+            />
+          )}
+          {FEATURES.auditLog && (
+            <RecentEventsCard events={SAMPLE_ANALYTICS_EVENTS} now={SAMPLE_ANALYTICS_NOW} />
+          )}
+        </div>
+      )}
     </>
   );
 }

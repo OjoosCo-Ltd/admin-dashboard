@@ -1,5 +1,5 @@
 import { UserCheckIcon } from "@phosphor-icons/react/ssr";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { CompactKpiCard, type CompactKpiTone } from "@/components/dashboard/compact-kpi-card";
 import {
@@ -9,6 +9,7 @@ import {
   GroupIcon,
   PaymentsIcon,
 } from "@/components/icons/app-icons";
+import { enabled } from "@/constants/features";
 import type { AnalyticsKpi, AnalyticsKpiId } from "@/types/analytics";
 
 // The chat and calendar glyphs are drawn with 1.5-unit strokes in a 24-unit box,
@@ -30,19 +31,26 @@ const CARDS: Record<AnalyticsKpiId, { icon: ReactNode; tone: CompactKpiTone }> =
   revenue: { icon: <PaymentsIcon />, tone: "action-band" },
 };
 
-/** The six headline figures: one row from 1400px, three or two to a row below that. */
+/**
+ * The headline figures: one row from 1400px, three or two to a row below that.
+ * Each basis leaves a gap's width spare and the cards grow into the row, so
+ * when a figure is hidden the short last row stretches to the edge.
+ */
 export function AnalyticsKpiRow({ kpis }: { kpis: AnalyticsKpi[] }) {
+  const cards = enabled(kpis);
   return (
     <section
       aria-label="Analytics figures"
-      className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 min-[87.5rem]:grid-cols-6"
+      className="flex flex-wrap gap-4 sm:gap-6"
+      style={{ "--kpi-count": cards.length } as CSSProperties}
     >
-      {kpis.map((kpi) => (
+      {cards.map((kpi) => (
         <CompactKpiCard
           key={kpi.id}
           kpi={kpi}
           icon={CARDS[kpi.id].icon}
           tone={CARDS[kpi.id].tone}
+          className="min-w-0 grow basis-[calc(50%-24px)] lg:basis-[calc(100%/3-24px)] min-[87.5rem]:basis-[calc(100%/var(--kpi-count)-24px)]"
         />
       ))}
     </section>

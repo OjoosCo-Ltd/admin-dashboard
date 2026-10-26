@@ -8,6 +8,7 @@ import {
   HAIRLINE_CARD,
 } from "@/components/analytics/analytics-format";
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
+import { FEATURES } from "@/constants/features";
 import type { EngagementStats } from "@/types/analytics";
 
 /**
@@ -30,15 +31,21 @@ const STAR_INK_WIDTH = 20;
 function StatTile({
   label,
   value,
+  className,
   children,
 }: {
   label: string;
   value: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <DashboardCard
-      className={cn(HAIRLINE_CARD, "flex flex-col items-center px-4 pt-6 pb-8 text-center sm:px-6")}
+      className={cn(
+        HAIRLINE_CARD,
+        "flex flex-col items-center px-4 pt-6 pb-8 text-center sm:px-6",
+        className,
+      )}
     >
       <DashboardCardTitle className="text-[13px]/4 font-semibold tracking-wider text-subtle-foreground uppercase">
         {label}
@@ -90,8 +97,13 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
-/** Virtual date completion, rating and length, and how many conversation threads are live. */
+/**
+ * Virtual date completion, rating and length, and how many conversation
+ * threads are live. The length waits on attendance data: an invitation records
+ * only when it starts.
+ */
 export function EngagementStatsRow({ stats }: { stats: EngagementStats }) {
+  const showDuration = FEATURES.dateAttendance;
   // Both are averages: print them to the precision the Figma shows, and judge
   // engagement on the minutes as printed, so "30m" never reads below target.
   const rating = Number(stats.avgRating.toFixed(1));
@@ -100,10 +112,14 @@ export function EngagementStatsRow({ stats }: { stats: EngagementStats }) {
 
   return (
     // Equal rows: in the 2×2 layout the second pair ends in a line of text,
-    // which is shorter than the meter and stars above it.
+    // which is shorter than the meter and stars above it. Three tiles sit
+    // three across from lg, and below that the third spans the row.
     <section
       aria-label="Virtual date and conversation figures"
-      className="grid auto-rows-fr grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-4"
+      className={cn(
+        "grid auto-rows-fr grid-cols-2 gap-4 sm:gap-6",
+        showDuration ? "xl:grid-cols-4" : "lg:grid-cols-3",
+      )}
     >
       <StatTile label="Completion Rate" value={formatPercent(stats.completionRate)}>
         <div
@@ -124,19 +140,25 @@ export function EngagementStatsRow({ stats }: { stats: EngagementStats }) {
       <StatTile label="Avg User Rating" value={`${rating}/${RATING_MAX}`}>
         <RatingStars rating={rating} />
       </StatTile>
-      <StatTile label="Avg Duration" value={`${minutes}m`}>
-        <p
-          className={cn(
-            "mt-1.5 text-[10px]/3.5 font-bold tracking-wide uppercase",
-            highEngagement
-              ? "text-success-strong dark:text-success"
-              : "text-caution dark:text-[#e9b97c]",
-          )}
-        >
-          {highEngagement ? "High engagement" : "Below target"}
-        </p>
-      </StatTile>
-      <StatTile label="Active Threads" value={formatCount(stats.activeThreads)}>
+      {showDuration && (
+        <StatTile label="Avg Duration" value={`${minutes}m`}>
+          <p
+            className={cn(
+              "mt-1.5 text-[10px]/3.5 font-bold tracking-wide uppercase",
+              highEngagement
+                ? "text-success-strong dark:text-success"
+                : "text-caution dark:text-[#e9b97c]",
+            )}
+          >
+            {highEngagement ? "High engagement" : "Below target"}
+          </p>
+        </StatTile>
+      )}
+      <StatTile
+        label="Active Threads"
+        value={formatCount(stats.activeThreads)}
+        className={cn(!showDuration && "max-lg:col-span-2")}
+      >
         <p className="mt-1.5 text-[10px]/3.5 text-muted-foreground">
           vs {formatCompactCount(stats.inactiveThreads)} Inactive
         </p>
