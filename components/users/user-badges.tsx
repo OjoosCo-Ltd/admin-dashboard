@@ -1,6 +1,7 @@
 import { cn } from "cn";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FEATURES } from "@/constants/features";
 import type { SubscriptionPlan } from "@/types/dashboard";
 import type { UserSummary } from "@/types/users";
 
@@ -43,7 +44,7 @@ export function UserAvatar({
         </AvatarFallback>
       </Avatar>
       {/* The status column says online or offline in words. */}
-      {!user.suspended && (
+      {FEATURES.presence && !user.suspended && (
         <span
           aria-hidden
           className={cn(

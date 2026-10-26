@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { ActionSheetContent } from "@/components/dashboard/action-sheet";
 import { Dialog } from "@/components/ui/dialog";
 import { PlanBadge, StatusBadge, UserAvatar } from "@/components/users/user-badges";
+import { FEATURES } from "@/constants/features";
 import type { UserDetail } from "@/types/users";
 
 const day = new Intl.DateTimeFormat("en-US", {
@@ -89,14 +90,16 @@ function PreviewBody({ user }: { user: UserDetail }) {
           className="rounded-full shadow-[0_4px_12px_rgb(0_0_0/0.12)]"
         />
         <p className="mt-7 text-base font-semibold">{user.name}</p>
-        <p className="text-base text-muted-foreground">{user.headline}</p>
+        {FEATURES.profileHeadline && (
+          <p className="text-base text-muted-foreground">{user.headline}</p>
+        )}
         <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
           {user.suspended ? (
             <StatusBadge status="suspended" className="h-4 text-[10px]" />
           ) : (
             <StatusBadge status={user.verification} className="h-4 text-[10px]" />
           )}
-          <PlanBadge plan={user.plan} size="sm" className="h-4" />
+          {FEATURES.subscriptions && <PlanBadge plan={user.plan} size="sm" className="h-4" />}
         </div>
       </div>
 

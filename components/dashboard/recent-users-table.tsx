@@ -17,18 +17,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { RecentUser, SubscriptionPlan } from "@/types/dashboard";
 
-// Widths from the Figma's 1,112px table. They're targets: a column still
-// grows to fit its content, and the table scrolls sideways when it can't fit.
-const COLUMNS = [
-  { label: "User", width: "w-[18.75%]" },
-  { label: "Age/Country", width: "w-[18.25%]" },
-  { label: "Verification", width: "w-[17.45%]" },
-  { label: "Subscription", width: "w-[18.15%]" },
-  { label: "Status", width: "w-[10.85%]" },
-  { label: "Last active", width: "w-[16.55%]" },
-];
+// Each column's share (%) of the Figma's 1,112px table, scaled up to fill the
+// width when a column is hidden. They're targets: a column still grows to fit
+// its content, and the table scrolls sideways when it can't fit.
+const COLUMNS = enabled<{ label: string; share: number; feature?: Feature }>([
+  { label: "User", share: 18.75 },
+  { label: "Age/Country", share: 18.25 },
+  { label: "Verification", share: 17.45 },
+  { label: "Subscription", share: 18.15, feature: "subscriptions" },
+  { label: "Status", share: 10.85, feature: "presence" },
+  { label: "Last active", share: 16.55 },
+]);
+const SHARES = COLUMNS.reduce((sum, column) => sum + column.share, 0);
 
 const PLAN_STYLES: Record<SubscriptionPlan, string> = {
   elite: "bg-elite font-bold text-white",
@@ -78,7 +81,7 @@ export function RecentUsersTable({
       <Table aria-labelledby={titleId}>
         <colgroup>
           {COLUMNS.map((column) => (
-            <col key={column.label} className={column.width} />
+            <col key={column.label} style={{ width: `${(column.share / SHARES) * 100}%` }} />
           ))}
         </colgroup>
         <TableHeader className="[&_tr]:border-b-0">
@@ -136,30 +139,37 @@ export function RecentUsersTable({
                   </span>
                 )}
               </TableCell>
-              <TableCell className={cell}>
-                <span
-                  className={cn(
-                    "inline-flex h-8 items-center rounded-md px-3 text-base uppercase",
-                    PLAN_STYLES[user.plan],
-                  )}
-                >
-                  {user.plan}
-                </span>
-              </TableCell>
-              <TableCell className={cell}>
-                <span
-                  className={cn(
-                    "flex items-center gap-2 text-[13px] font-semibold",
-                    user.online ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
+              {FEATURES.subscriptions && (
+                <TableCell className={cell}>
                   <span
-                    aria-hidden
-                    className={cn("size-2 rounded-full", user.online ? "bg-online" : "bg-outline")}
-                  />
-                  {user.online ? "Active" : "Offline"}
-                </span>
-              </TableCell>
+                    className={cn(
+                      "inline-flex h-8 items-center rounded-md px-3 text-base uppercase",
+                      PLAN_STYLES[user.plan],
+                    )}
+                  >
+                    {user.plan}
+                  </span>
+                </TableCell>
+              )}
+              {FEATURES.presence && (
+                <TableCell className={cell}>
+                  <span
+                    className={cn(
+                      "flex items-center gap-2 text-[13px] font-semibold",
+                      user.online ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-2 rounded-full",
+                        user.online ? "bg-online" : "bg-outline",
+                      )}
+                    />
+                    {user.online ? "Active" : "Offline"}
+                  </span>
+                </TableCell>
+              )}
               {/* Right-aligned short of the header's edge, as in the Figma. */}
               <TableCell
                 className={cn(

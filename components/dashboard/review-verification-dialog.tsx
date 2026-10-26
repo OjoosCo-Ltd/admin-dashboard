@@ -9,6 +9,7 @@ import {
   WarningIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
+import { cn } from "cn";
 import Image from "next/image";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { FEATURES } from "@/constants/features";
 import type { VerificationCheck, VerificationRequest } from "@/types/dashboard";
 
 // Submission times are shown in GMT, so every admin reads the same time.
@@ -46,7 +48,8 @@ const CHECK_STATUS: Record<VerificationCheck["status"], { icon: ReactNode; label
   failed: { icon: <XCircleIcon className="size-4.5 text-destructive" />, label: "failed" },
 };
 
-// On phones the two secondary actions share a row above a full-width Approve.
+// On phones the two secondary actions share a row above a full-width Approve,
+// and Reject sits beside Approve when it's the only one.
 const footerButton =
   "h-14 rounded-[10px] px-8 text-[17px] font-normal max-sm:h-11 max-sm:px-3 max-sm:text-[15px]";
 
@@ -119,23 +122,37 @@ export function ReviewVerificationDialog({
             />
           </div>
 
-          <div className="grid gap-6 md:grid-cols-[1fr_12.25rem]">
-            <div className="flex flex-col gap-3">
-              <label
-                htmlFor="verification-notes"
-                className="text-base text-muted-foreground uppercase"
-              >
-                Administrative notes
-              </label>
-              <Textarea
-                id="verification-notes"
-                placeholder="Add observations regarding document authenticity or facial match..."
-                className="min-h-28 rounded-lg bg-surface px-6 py-5 text-[15px] placeholder:text-[#6b7280] md:text-[15px]"
-              />
-            </div>
+          <div
+            className={cn(
+              "grid gap-6",
+              FEATURES.verificationNotes && "md:grid-cols-[1fr_12.25rem]",
+            )}
+          >
+            {FEATURES.verificationNotes && (
+              <div className="flex flex-col gap-3">
+                <label
+                  htmlFor="verification-notes"
+                  className="text-base text-muted-foreground uppercase"
+                >
+                  Administrative notes
+                </label>
+                <Textarea
+                  id="verification-notes"
+                  placeholder="Add observations regarding document authenticity or facial match..."
+                  className="min-h-28 rounded-lg bg-surface px-6 py-5 text-[15px] placeholder:text-[#6b7280] md:text-[15px]"
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-3">
               <h3 className="text-base font-normal text-muted-foreground uppercase">Checks</h3>
-              <ul className="flex flex-col gap-1.5">
+              {/* Without the notes beside them, the checks run across the dialog. */}
+              <ul
+                className={cn(
+                  "flex flex-col gap-1.5",
+                  !FEATURES.verificationNotes &&
+                    "sm:grid sm:grid-cols-[repeat(auto-fit,minmax(12.25rem,1fr))] sm:gap-3",
+                )}
+              >
                 {request.checks.map((check) => (
                   <li
                     key={check.id}
@@ -151,13 +168,15 @@ export function ReviewVerificationDialog({
           </div>
         </ActionDialogBody>
         <ActionDialogFooter className="max-sm:grid max-sm:grid-cols-2">
-          <Button
-            variant="outline"
-            onClick={() => notYet("Requesting more info")}
-            className={`${footerButton} bg-background text-muted-foreground`}
-          >
-            Request More Info
-          </Button>
+          {FEATURES.verificationResubmission && (
+            <Button
+              variant="outline"
+              onClick={() => notYet("Requesting more info")}
+              className={`${footerButton} bg-background text-muted-foreground`}
+            >
+              Request More Info
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => notYet("Rejecting a submission")}
@@ -167,7 +186,11 @@ export function ReviewVerificationDialog({
           </Button>
           <Button
             onClick={() => notYet("Approving a user")}
-            className={`${footerButton} bg-action text-white hover:bg-action/90 max-sm:col-span-2`}
+            className={cn(
+              footerButton,
+              "bg-action text-white hover:bg-action/90",
+              FEATURES.verificationResubmission && "max-sm:col-span-2",
+            )}
           >
             Approve User
           </Button>

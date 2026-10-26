@@ -1,3 +1,4 @@
+import { cn } from "cn";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -8,6 +9,7 @@ import { AgeDistributionCard } from "@/components/users/age-distribution-card";
 import { GenderCard } from "@/components/users/gender-card";
 import { GrowthTrendCard } from "@/components/users/growth-trend-card";
 import { UsersDirectory, UsersDirectoryFallback } from "@/components/users/users-directory";
+import { enabled } from "@/constants/features";
 import {
   SAMPLE_AGE_BANDS,
   SAMPLE_GENDER_SPLIT,
@@ -22,6 +24,11 @@ export const metadata: Metadata = { title: "Users" };
 // UI only: every section renders the Figma's sample figures until GET
 // /admin/users and the user stats are typed and wired.
 export default function UsersPage() {
+  const kpis = enabled(SAMPLE_USER_KPIS);
+  // Five cards (Premium Subscribers hidden) sit five across; below that, the
+  // last one fills the space its row leaves in two or three columns.
+  const fiveAcross = kpis.length === 5;
+
   return (
     <>
       <PageHeader
@@ -33,10 +40,17 @@ export default function UsersPage() {
       </PageHeader>
       <section
         aria-label="Key metrics"
-        className="grid gap-6 min-[30rem]:grid-cols-2 lg:grid-cols-3 min-[90rem]:grid-cols-6"
+        className={cn(
+          "grid gap-6 min-[30rem]:grid-cols-2 lg:grid-cols-3",
+          fiveAcross ? "min-[90rem]:grid-cols-5" : "min-[90rem]:grid-cols-6",
+        )}
       >
-        {SAMPLE_USER_KPIS.map((stat) => (
-          <StatCard key={stat.id} stat={stat} />
+        {kpis.map((stat) => (
+          <StatCard
+            key={stat.id}
+            stat={stat}
+            className={cn(fiveAcross && "min-[30rem]:max-[90rem]:last:col-span-2")}
+          />
         ))}
       </section>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

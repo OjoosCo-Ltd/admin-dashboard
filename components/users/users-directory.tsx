@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { UserPreviewSheet } from "@/components/users/user-preview-sheet";
 import { UsersTable } from "@/components/users/users-table";
+import { FEATURES } from "@/constants/features";
 import type { UserDetail, UserPlanFilter, UserStatusFilter } from "@/types/users";
 
 const PAGE_SIZE = 25;
@@ -101,11 +102,10 @@ function DirectoryView({
 
   const countries = [...new Set(users.map((user) => user.country))].sort();
   const query = filters.q.trim().toLowerCase();
+  // While plans are hidden, an old ?plan= link can't filter by them.
+  const plan = FEATURES.subscriptions ? filters.plan : "all";
   const filtered =
-    query !== "" ||
-    filters.location !== "all" ||
-    filters.status !== "all" ||
-    filters.plan !== "all";
+    query !== "" || filters.location !== "all" || filters.status !== "all" || plan !== "all";
 
   const matches = users.filter(
     (user) =>
@@ -118,7 +118,7 @@ function DirectoryView({
         (filters.status === "suspended"
           ? user.suspended
           : !user.suspended && user.verification === filters.status)) &&
-      (filters.plan === "all" || user.plan === filters.plan),
+      (plan === "all" || user.plan === plan),
   );
 
   const total = filtered ? matches.length : totalCount;
@@ -164,13 +164,15 @@ function DirectoryView({
           options={STATUSES}
           render={(value) => <>Status: {value}</>}
         />
-        <FilterSelect
-          label="Plan"
-          value={filters.plan}
-          onValueChange={(plan) => refine({ plan: plan as UserPlanFilter })}
-          options={PLANS}
-          render={(value) => <>Plan: {value}</>}
-        />
+        {FEATURES.subscriptions && (
+          <FilterSelect
+            label="Plan"
+            value={filters.plan}
+            onValueChange={(value) => refine({ plan: value as UserPlanFilter })}
+            options={PLANS}
+            render={(value) => <>Plan: {value}</>}
+          />
+        )}
         <button
           type="button"
           onClick={() => onChange(null)}

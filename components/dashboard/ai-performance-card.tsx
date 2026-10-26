@@ -1,6 +1,7 @@
 import { StarFourIcon } from "@phosphor-icons/react/ssr";
 
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
+import { FEATURES } from "@/constants/features";
 import type { AiPerformance } from "@/types/dashboard";
 
 const percent = new Intl.NumberFormat("en-US", {
@@ -22,7 +23,7 @@ const seconds = new Intl.NumberFormat("en-US", {
 });
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 
-/** The headline AI figures on a primary card: match accuracy and two service stats. */
+/** The headline AI figures on a primary card: match accuracy and, with AI metrics, two service stats. */
 export function AiPerformanceCard({ data }: { data: AiPerformance }) {
   const stats = [
     { label: "Avg Response", value: seconds.format(data.avgResponseSeconds) },
@@ -47,14 +48,16 @@ export function AiPerformanceCard({ data }: { data: AiPerformance }) {
         </span>
       </p>
 
-      <dl className="mx-auto mt-6 grid w-full max-w-63.5 gap-3 @min-[15rem]:grid-cols-2">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-xl bg-primary-foreground/10 p-3">
-            <dt className="text-[11px] leading-3.5 text-primary-foreground/60">{stat.label}</dt>
-            <dd className="text-base font-bold">{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {FEATURES.aiMetrics && (
+        <dl className="mx-auto mt-6 grid w-full max-w-63.5 gap-3 @min-[15rem]:grid-cols-2">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-xl bg-primary-foreground/10 p-3">
+              <dt className="text-[11px] leading-3.5 text-primary-foreground/60">{stat.label}</dt>
+              <dd className="text-base font-bold">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </DashboardCard>
   );
 }

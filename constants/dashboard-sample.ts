@@ -47,6 +47,7 @@ export const SAMPLE_KPIS: KpiStat[] = [
   },
   {
     id: "premium-subscribers",
+    feature: "subscriptions",
     label: "Premium Subscribers",
     value: 9_842,
     change: 6,
@@ -59,6 +60,7 @@ export const SAMPLE_KPIS: KpiStat[] = [
 export const SAMPLE_METRICS: OpsMetric[] = [
   {
     id: "revenue",
+    feature: "payments",
     label: "Revenue This Month",
     value: "$82,450",
     note: "+14% vs last month",

@@ -35,6 +35,7 @@ export const SAMPLE_USER_KPIS: KpiStat[] = [
   },
   {
     id: "premium-subscribers",
+    feature: "subscriptions",
     label: "Premium Subscribers",
     value: 9_842,
     change: 6,

@@ -2,6 +2,7 @@ import { cn } from "cn";
 import { useId } from "react";
 
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
+import { FEATURES } from "@/constants/features";
 import type { TrustSafety } from "@/types/dashboard";
 
 const count = new Intl.NumberFormat("en-US");
@@ -21,20 +22,27 @@ export function TrustSafetyCard({ data }: { data: TrustSafety }) {
     <DashboardCard className="@container">
       <DashboardCardTitle>Trust & Safety</DashboardCardTitle>
 
-      <dl className="mx-auto mt-6 grid w-full max-w-63.5 gap-3 @min-[15rem]:grid-cols-2">
-        <SafetyTile
-          label="Fraud Attempts"
-          value={count.format(data.fraudAttempts)}
-          valueClassName="text-destructive"
-          note={`${change.format(data.fraudChange / 100)} vs last week`}
-          // Fewer fraud attempts is the good direction.
-          noteClassName={cn(
-            "font-semibold",
-            data.fraudChange < 0 && "text-success",
-            data.fraudChange > 0 && "text-destructive",
-            data.fraudChange === 0 && "text-muted-foreground",
-          )}
-        />
+      <dl
+        className={cn(
+          "mx-auto mt-6 grid w-full max-w-63.5 gap-3",
+          FEATURES.fraudSignals && "@min-[15rem]:grid-cols-2",
+        )}
+      >
+        {FEATURES.fraudSignals && (
+          <SafetyTile
+            label="Fraud Attempts"
+            value={count.format(data.fraudAttempts)}
+            valueClassName="text-destructive"
+            note={`${change.format(data.fraudChange / 100)} vs last week`}
+            // Fewer fraud attempts is the good direction.
+            noteClassName={cn(
+              "font-semibold",
+              data.fraudChange < 0 && "text-success",
+              data.fraudChange > 0 && "text-destructive",
+              data.fraudChange === 0 && "text-muted-foreground",
+            )}
+          />
+        )}
         <SafetyTile
           label="Reported Profiles"
           value={count.format(data.reportedProfiles)}

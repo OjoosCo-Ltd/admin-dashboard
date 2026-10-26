@@ -125,6 +125,9 @@ export type Feature = keyof typeof flags;
 export const FEATURES: Record<Feature, boolean> = flags;
 
 /** Keeps the items whose feature is on. Items without a `feature` always stay. */
-export function enabled<T extends { feature?: Feature }>(items: readonly T[]): T[] {
-  return items.filter((item) => !item.feature || FEATURES[item.feature]);
+export function enabled<T extends object>(items: readonly T[]): T[] {
+  return items.filter((item) => {
+    const feature = (item as { feature?: Feature }).feature;
+    return !feature || FEATURES[feature];
+  });
 }

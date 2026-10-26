@@ -21,20 +21,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { UserSummary } from "@/types/users";
 
 // The Figma's table (1,256px) is wider than the content area at 1440px. Like
 // the Figma, two-word headers and long cells wrap; with tighter inner padding
 // the table fits from 1440px and scrolls sideways below its minimum width.
-const COLUMNS = [
-  { label: "User", width: "w-[27%]" },
-  { label: "ID / Demographics", width: "w-[14%]" },
-  { label: "Location", width: "w-[12%]" },
-  { label: "Status", width: "w-[11%]" },
-  { label: "Subscription", width: "w-[13%]" },
-  { label: "Last active", width: "w-[10%]" },
-  { label: "Actions", width: "w-[13%]", align: "text-right" },
-];
+// Each column's share (%) scales up to fill the width when a column is hidden,
+// and the minimum width (68rem with every column) shrinks with it.
+const COLUMNS = enabled<{ label: string; share: number; align?: string; feature?: Feature }>([
+  { label: "User", share: 27 },
+  { label: "ID / Demographics", share: 14 },
+  { label: "Location", share: 12 },
+  { label: "Status", share: 11 },
+  { label: "Subscription", share: 13, feature: "subscriptions" },
+  { label: "Last active", share: 10 },
+  { label: "Actions", share: 13, align: "text-right" },
+]);
+const SHARES = COLUMNS.reduce((sum, column) => sum + column.share, 0);
 
 // 24px at the table's edges, 14px between columns.
 const edges = "px-3.5 first:pl-6 last:pr-6";
@@ -87,10 +91,10 @@ export function UsersTable({
         className,
       )}
     >
-      <Table className="min-w-272">
+      <Table style={{ minWidth: `${(68 * SHARES) / 100}rem` }}>
         <colgroup>
           {COLUMNS.map((column) => (
-            <col key={column.label} className={column.width} />
+            <col key={column.label} style={{ width: `${(column.share / SHARES) * 100}%` }} />
           ))}
         </colgroup>
         <TableHeader className="[&_tr]:border-b-0">
@@ -147,14 +151,18 @@ export function UsersTable({
                   ) : (
                     <>
                       <StatusBadge status={user.verification} />
-                      <StatusBadge status={user.online ? "online" : "offline"} />
+                      {FEATURES.presence && (
+                        <StatusBadge status={user.online ? "online" : "offline"} />
+                      )}
                     </>
                   )}
                 </div>
               </TableCell>
-              <TableCell className={cn(cell, dimmed(user))}>
-                <PlanBadge plan={user.plan} />
-              </TableCell>
+              {FEATURES.subscriptions && (
+                <TableCell className={cn(cell, dimmed(user))}>
+                  <PlanBadge plan={user.plan} />
+                </TableCell>
+              )}
               <TableCell className={cn(cell, dimmed(user))}>
                 <p className="text-base font-semibold whitespace-normal text-foreground">
                   {user.lastActive}
