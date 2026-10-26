@@ -40,6 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SAMPLE_EVENT_COMMUNITIES } from "@/constants/community-sample";
+import { FEATURES } from "@/constants/features";
 import type { CommunityEvent } from "@/types/community";
 
 const PAGE_SIZE = 10;
@@ -179,15 +180,17 @@ function EventTableView({
   onChange: (next: Partial<Filters>, options?: { debounced?: boolean }) => void;
 }) {
   const tableId = useId();
-  const query = filters.q.trim().toLowerCase();
+  // While search and attendance are hidden, an old link's ?q= and ?attendance= are ignored.
+  const query = FEATURES.eventFilters ? filters.q.trim().toLowerCase() : "";
   const date = DATES.find((option) => option.value === filters.date);
   const attendance =
-    ATTENDANCE.find((option) => option.value === filters.attendance) ?? ATTENDANCE[0];
+    (FEATURES.eventFilters && ATTENDANCE.find((option) => option.value === filters.attendance)) ||
+    ATTENDANCE[0];
   const filtered =
     query !== "" ||
     filters.status !== "all" ||
     filters.date !== "any" ||
-    filters.attendance !== "any" ||
+    attendance.value !== "any" ||
     filters.group !== "all" ||
     filters.type !== "all";
 
@@ -232,22 +235,24 @@ function EventTableView({
   return (
     <>
       <DashboardCard className="flex flex-wrap items-center gap-2 p-3 shadow-[0_2px_6px_rgb(24_28_30/0.04)]">
-        <div className="relative min-w-60 flex-1">
-          <MagnifyingGlassIcon
-            aria-hidden
-            weight="bold"
-            className="pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            type="search"
-            aria-label="Search events"
-            aria-controls={tableId}
-            placeholder="Search events..."
-            value={filters.q}
-            onChange={(change) => refine({ q: change.target.value }, { debounced: true })}
-            className="h-9 rounded-sm bg-surface pl-12 text-[13px] placeholder:text-[#6b7280] md:text-[13px] dark:bg-input/30"
-          />
-        </div>
+        {FEATURES.eventFilters && (
+          <div className="relative min-w-60 flex-1">
+            <MagnifyingGlassIcon
+              aria-hidden
+              weight="bold"
+              className="pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type="search"
+              aria-label="Search events"
+              aria-controls={tableId}
+              placeholder="Search events..."
+              value={filters.q}
+              onChange={(change) => refine({ q: change.target.value }, { debounced: true })}
+              className="h-9 rounded-sm bg-surface pl-12 text-[13px] placeholder:text-[#6b7280] md:text-[13px] dark:bg-input/30"
+            />
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <FilterButton
             label="Status"
@@ -261,12 +266,14 @@ function EventTableView({
             options={DATES}
             onChange={(value) => refine({ date: value as Filters["date"] })}
           />
-          <FilterButton
-            label="Attendance"
-            value={filters.attendance}
-            options={ATTENDANCE}
-            onChange={(value) => refine({ attendance: value as Filters["attendance"] })}
-          />
+          {FEATURES.eventFilters && (
+            <FilterButton
+              label="Attendance"
+              value={filters.attendance}
+              options={ATTENDANCE}
+              onChange={(value) => refine({ attendance: value as Filters["attendance"] })}
+            />
+          )}
           <FilterButton
             label="Group"
             value={filters.group}
@@ -314,12 +321,14 @@ function EventTableView({
               >
                 <TableCell className="py-3 pr-4 pl-6">
                   <div className="flex items-center gap-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- a sample cover; next/image once the API's URLs are wired */}
-                    <img
-                      src={event.imageUrl}
-                      alt=""
-                      className="size-12 shrink-0 rounded-md border border-border/30 bg-muted object-cover shadow-xs"
-                    />
+                    {FEATURES.eventMedia && (
+                      // eslint-disable-next-line @next/next/no-img-element -- a sample cover; next/image once the API's URLs are wired
+                      <img
+                        src={event.imageUrl}
+                        alt=""
+                        className="size-12 shrink-0 rounded-md border border-border/30 bg-muted object-cover shadow-xs"
+                      />
+                    )}
                     <span className="text-[13px]/5 whitespace-normal">{event.title}</span>
                   </div>
                 </TableCell>

@@ -15,7 +15,10 @@ const KINDS: Record<GroupActivity["kind"], { icon: Icon; disc: string }> = {
   },
 };
 
-/** A group's latest events, each on a disc of its kind. Members' actions are set in bold. */
+/**
+ * A group's latest events, each on a disc of its kind. Members' actions are set
+ * in bold. Given the page's width (no Member Growth beside it), they run across.
+ */
 export function GroupActivityCard({
   activity,
   className,
@@ -24,9 +27,9 @@ export function GroupActivityCard({
   className?: string;
 }) {
   return (
-    <DashboardCard className={cn("flex flex-col", className)}>
+    <DashboardCard className={cn("@container flex flex-col", className)}>
       <DashboardCardTitle className="text-xl/7 font-semibold">Recent Activity</DashboardCardTitle>
-      <ul className="mt-6 flex flex-col gap-5.5">
+      <ul className="mt-6 flex flex-col gap-5.5 @3xl:grid @3xl:grid-cols-3 @3xl:gap-6">
         {activity.map((item) => {
           const kind = KINDS[item.kind];
           return (

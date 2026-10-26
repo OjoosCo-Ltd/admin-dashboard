@@ -4,9 +4,13 @@ import { cn } from "cn";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { enabled, type Feature } from "@/constants/features";
+
 export interface SectionTab {
   label: string;
   href: string;
+  /** Hidden while this feature is off. */
+  feature?: Feature;
 }
 
 /**
@@ -28,7 +32,7 @@ export function SectionTabs({
     // Scrolls sideways on phones rather than wrapping.
     <nav aria-label={label} className="[scrollbar-width:none] overflow-x-auto">
       <ul className="flex w-max min-w-full border-b border-border/50 dark:border-border">
-        {tabs.map((tab) => {
+        {enabled(tabs).map((tab) => {
           const current = pathname === tab.href;
           return (
             <li key={tab.href}>

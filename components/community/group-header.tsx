@@ -10,6 +10,7 @@ import { GroupFormDialog } from "@/components/community/group-form-dialog";
 import { GROUP_GLYPHS } from "@/components/community/group-thumbnail";
 import { SectionTabs } from "@/components/community/section-tabs";
 import { Button } from "@/components/ui/button";
+import { FEATURES } from "@/constants/features";
 import type { CommunityGroup } from "@/types/community";
 
 /** Overview, Members, Discussions and Reports: one page each under /community/groups/{id}. */
@@ -20,7 +21,7 @@ export function GroupTabs({ groupId }: { groupId: string }) {
       label="Group sections"
       tabs={[
         { label: "Overview", href: base },
-        { label: "Members", href: `${base}/members` },
+        { label: "Members", href: `${base}/members`, feature: "groupMembers" },
         { label: "Discussions", href: `${base}/discussions` },
         { label: "Reports", href: `${base}/reports` },
       ]}
@@ -52,9 +53,13 @@ export function GroupHeader({ group }: { group: CommunityGroup }) {
         <div className="min-w-0">
           <h1 className="text-[28px]/9 font-bold text-primary">{group.name}</h1>
           <p className="flex items-center gap-1 text-[13px]/5 text-muted-foreground">
-            <Privacy aria-hidden weight="fill" className="size-4 shrink-0" />
-            {group.privacy === "public" ? "Public" : "Private"} Group
-            <span aria-hidden>&bull;</span>
+            {FEATURES.groupPrivacy && (
+              <>
+                <Privacy aria-hidden weight="fill" className="size-4 shrink-0" />
+                {group.privacy === "public" ? "Public" : "Private"} Group
+                <span aria-hidden>&bull;</span>
+              </>
+            )}
             Created {group.createdOn}
           </p>
         </div>

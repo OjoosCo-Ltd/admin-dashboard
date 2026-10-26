@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cn } from "cn";
 import { Suspense } from "react";
 
 import { CommunityActivityCard } from "@/components/community/community-activity-card";
@@ -14,6 +15,7 @@ import {
   SAMPLE_GROUP_TOTAL,
   SAMPLE_GROUPS,
 } from "@/constants/community-sample";
+import { FEATURES } from "@/constants/features";
 
 export const metadata: Metadata = { title: "Community" };
 
@@ -27,11 +29,17 @@ export default function CommunityGroupsPage() {
       <Suspense fallback={<GroupTableFallback groups={SAMPLE_GROUPS} total={SAMPLE_GROUP_TOTAL} />}>
         <GroupTable groups={SAMPLE_GROUPS} total={SAMPLE_GROUP_TOTAL} />
       </Suspense>
-      <div className="grid gap-6 xl:grid-cols-12 xl:items-start">
+      {/* Without Recent Activity, the insight stands alone and matches the chart's height. */}
+      <div className={cn("grid gap-6 xl:grid-cols-12", FEATURES.auditLog && "xl:items-start")}>
         <CommunityGrowthCard data={SAMPLE_COMMUNITY_GROWTH} className="xl:col-span-8" />
-        <div className="grid gap-6 md:grid-cols-2 md:items-start xl:col-span-4 xl:grid-cols-1">
+        <div
+          className={cn(
+            "grid gap-6 xl:col-span-4",
+            FEATURES.auditLog && "md:grid-cols-2 md:items-start xl:grid-cols-1",
+          )}
+        >
           <SmartInsightCard insight={SAMPLE_COMMUNITY_INSIGHT} />
-          <CommunityActivityCard activity={SAMPLE_COMMUNITY_ACTIVITY} />
+          {FEATURES.auditLog && <CommunityActivityCard activity={SAMPLE_COMMUNITY_ACTIVITY} />}
         </div>
       </div>
     </>

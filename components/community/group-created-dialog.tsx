@@ -21,6 +21,7 @@ import {
   UserPlusIcon,
   UsersThreeIcon,
 } from "@phosphor-icons/react";
+import { cn } from "cn";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ import { ACTION_DIALOG_SCRIM } from "@/components/dashboard/action-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog";
 import { GROUP_CATEGORIES, type GroupCategory } from "@/constants/community";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 
 const CATEGORY_ICONS: Record<GroupCategory, Icon> = {
   BOOKS_AND_READING: BooksIcon,
@@ -44,11 +46,11 @@ const CATEGORY_ICONS: Record<GroupCategory, Icon> = {
   ENTREPRENEURSHIP: RocketLaunchIcon,
 };
 
-const NEXT_STEPS: { label: string; icon: Icon }[] = [
-  { label: "Invite Initial Members", icon: UserPlusIcon },
+const NEXT_STEPS = enabled<{ label: string; icon: Icon; feature?: Feature }>([
+  { label: "Invite Initial Members", icon: UserPlusIcon, feature: "groupInvites" },
   { label: "Post First Announcement", icon: MegaphoneSimpleIcon },
   { label: "Create Welcome Event", icon: CalendarPlusIcon },
-];
+]);
 
 export interface CreatedGroup {
   values: GroupFormValues;
@@ -58,7 +60,7 @@ export interface CreatedGroup {
 
 /**
  * The success screen after Create Group: the new group's card, a way into its
- * dashboard, three next steps and a tip beneath. UI only: nothing was saved.
+ * dashboard, the next steps and a tip beneath. UI only: nothing was saved.
  */
 export function GroupCreatedDialog({
   created,
@@ -134,10 +136,12 @@ function CreatedContent({ created }: { created: CreatedGroup }) {
                 <CategoryIcon aria-hidden weight="bold" className="size-4" />
                 {category?.label}
               </span>
-              <span className="flex items-center gap-1">
-                <PrivacyIcon aria-hidden weight="fill" className="size-4.5" />
-                {values.privacy === "public" ? "Public" : "Private"}
-              </span>
+              {FEATURES.groupPrivacy && (
+                <span className="flex items-center gap-1">
+                  <PrivacyIcon aria-hidden weight="fill" className="size-4.5" />
+                  {values.privacy === "public" ? "Public" : "Private"}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -153,7 +157,12 @@ function CreatedContent({ created }: { created: CreatedGroup }) {
 
         <div className="mt-14 border-t border-border/50 pt-10 text-left dark:border-border">
           <h3 className="text-xs/4 font-semibold tracking-wider uppercase">Next Steps</h3>
-          <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+          <ul
+            className={cn(
+              "mt-6 grid gap-3",
+              NEXT_STEPS.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2",
+            )}
+          >
             {NEXT_STEPS.map((step) => (
               <li key={step.label}>
                 <button

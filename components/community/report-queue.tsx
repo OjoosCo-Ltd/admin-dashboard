@@ -23,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { GroupReport } from "@/types/community";
 
 const PAGE_SIZE = 10;
@@ -37,16 +38,23 @@ interface Filters {
   page: number;
 }
 
-/** The Figma's columns, less the empty one it leaves before Report ID. */
-const COLUMNS = [
+/**
+ * The Figma's columns, less the empty one it leaves before Report ID. Without
+ * Priority, Reported Content takes its share.
+ */
+const COLUMNS = enabled<{ label: string; width: string; cell?: string; feature?: Feature }>([
   { label: "Report ID", width: "w-[11%]", cell: "pl-6" },
-  { label: "Reported Content", width: "w-[29%]" },
+  { label: "Reported Content", width: FEATURES.reportPriority ? "w-[29%]" : "w-[39%]" },
   { label: "Reason", width: "w-[13%]" },
   { label: "Reporter / Date", width: "w-[15%]" },
-  { label: "Priority", width: "w-[10%]" },
+  { label: "Priority", width: "w-[10%]", feature: "reportPriority" },
   { label: "Status", width: "w-[13%]" },
   { label: "Actions", width: "w-[9%]", cell: "pr-6 text-right" },
-];
+]);
+
+/** Only posts can be reported until replyReports: comments and profile photos have no report route. */
+const reportable = (report: GroupReport) =>
+  FEATURES.replyReports || (report.kind !== "comment" && report.kind !== "image");
 
 interface ReportQueueProps {
   /** UI only: one sample page, filtered here. */
@@ -84,16 +92,18 @@ function ReportQueueView({
   onChange: (next: Partial<Filters>, options?: { debounced?: boolean }) => void;
 }) {
   const titleId = useId();
-  const query = filters.q.trim().toLowerCase().replace(/^#/, "");
+  // While the search is hidden, an old link's ?q= is ignored.
+  const query = FEATURES.reportSearch ? filters.q.trim().toLowerCase().replace(/^#/, "") : "";
 
   // UI only: GET /admin/community/reports isn't wired, so the sample page is
   // searched here and every page shows the same rows.
   const rows = reports.filter(
     (report) =>
-      query === "" ||
-      [report.id, report.reporter, report.source].some((field) =>
-        field.toLowerCase().includes(query),
-      ),
+      reportable(report) &&
+      (query === "" ||
+        [report.id, report.reporter, report.source].some((field) =>
+          field.toLowerCase().includes(query),
+        )),
   );
   const filteredTotal = query !== "" ? rows.length : total;
   const pageCount = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
@@ -108,24 +118,31 @@ function ReportQueueView({
         <DashboardCardTitle id={titleId} className="text-xl/7 font-semibold">
           Active Reports
         </DashboardCardTitle>
-        <div className="relative w-full sm:w-48">
-          <MagnifyingGlassIcon
-            aria-hidden
-            weight="bold"
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            type="search"
-            aria-label="Search reports by ID or user"
-            placeholder="Search ID or User..."
-            value={filters.q}
-            onChange={(event) => onChange({ q: event.target.value, page: 1 }, { debounced: true })}
-            className="h-8 rounded-md bg-surface pl-9 text-sm placeholder:text-subtle-foreground md:text-sm dark:bg-input/30"
-          />
-        </div>
+        {FEATURES.reportSearch && (
+          <div className="relative w-full sm:w-48">
+            <MagnifyingGlassIcon
+              aria-hidden
+              weight="bold"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              type="search"
+              aria-label="Search reports by ID or user"
+              placeholder="Search ID or User..."
+              value={filters.q}
+              onChange={(event) =>
+                onChange({ q: event.target.value, page: 1 }, { debounced: true })
+              }
+              className="h-8 rounded-md bg-surface pl-9 text-sm placeholder:text-subtle-foreground md:text-sm dark:bg-input/30"
+            />
+          </div>
+        )}
       </div>
 
-      <Table aria-labelledby={titleId} className="min-w-230">
+      <Table
+        aria-labelledby={titleId}
+        className={FEATURES.reportPriority ? "min-w-230" : "min-w-207"}
+      >
         <colgroup>
           {COLUMNS.map((column) => (
             <col key={column.label} className={column.width} />
@@ -167,9 +184,11 @@ function ReportQueueView({
                 {/* The Figma lets the time wrap: "Yesterday, 11:20 / PM". */}
                 <p className="max-w-30 text-xs/4 text-muted-foreground">{report.reportedAt}</p>
               </TableCell>
-              <TableCell className="px-4">
-                <PriorityLabel priority={report.priority} />
-              </TableCell>
+              {FEATURES.reportPriority && (
+                <TableCell className="px-4">
+                  <PriorityLabel priority={report.priority} />
+                </TableCell>
+              )}
               <TableCell className="px-4">
                 <ReportStatusBadge status={report.status} />
               </TableCell>
@@ -192,7 +211,7 @@ function ReportQueueView({
                 colSpan={COLUMNS.length}
                 className="h-24 text-center text-[13px] text-muted-foreground"
               >
-                No reports match this search.
+                {query === "" ? "No reports to review." : "No reports match this search."}
               </TableCell>
             </TableRow>
           )}

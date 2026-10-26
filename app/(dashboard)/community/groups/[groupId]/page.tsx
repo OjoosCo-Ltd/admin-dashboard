@@ -9,6 +9,7 @@ import {
   SAMPLE_GROUP_OVERVIEW_KPIS,
   SAMPLE_MEMBER_GROWTH,
 } from "@/constants/community-sample";
+import { FEATURES } from "@/constants/features";
 
 import { sampleGroup, sampleGroupParams } from "./sample-group";
 
@@ -34,10 +35,14 @@ export default async function GroupOverviewPage({
         kpis={SAMPLE_GROUP_OVERVIEW_KPIS}
         tiles={["chat", "target", "calendar", "thumbs"]}
       />
-      <div className="grid gap-6 xl:grid-cols-12">
-        <MemberGrowthCard data={SAMPLE_MEMBER_GROWTH} className="min-h-100 xl:col-span-8" />
-        <GroupActivityCard activity={SAMPLE_GROUP_ACTIVITY} className="xl:col-span-4" />
-      </div>
+      {FEATURES.groupAnalytics ? (
+        <div className="grid gap-6 xl:grid-cols-12">
+          <MemberGrowthCard data={SAMPLE_MEMBER_GROWTH} className="min-h-100 xl:col-span-8" />
+          <GroupActivityCard activity={SAMPLE_GROUP_ACTIVITY} className="xl:col-span-4" />
+        </div>
+      ) : (
+        <GroupActivityCard activity={SAMPLE_GROUP_ACTIVITY} />
+      )}
     </>
   );
 }

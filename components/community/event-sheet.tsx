@@ -19,6 +19,7 @@ import { EventFormDialog } from "@/components/community/event-form-dialog";
 import { ActionSheetContent } from "@/components/dashboard/action-sheet";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { FEATURES } from "@/constants/features";
 import type { CommunityEvent } from "@/types/community";
 
 const count = new Intl.NumberFormat("en-US");
@@ -89,9 +90,12 @@ function SheetContents({
         </DialogPrimitive.Close>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {/* eslint-disable-next-line @next/next/no-img-element -- a sample cover; next/image once the API's URLs are wired */}
-        <img src={event.imageUrl} alt="" className="h-50 w-full bg-muted object-cover" />
+      {/* Without the banner, a hairline sets the details apart from the title, as the footer's does. */}
+      <div className={cn("min-h-0 flex-1 overflow-y-auto", !FEATURES.eventMedia && "border-t")}>
+        {FEATURES.eventMedia && (
+          // eslint-disable-next-line @next/next/no-img-element -- a sample cover; next/image once the API's URLs are wired
+          <img src={event.imageUrl} alt="" className="h-50 w-full bg-muted object-cover" />
+        )}
 
         <div className="px-6 pt-6 pb-8 max-sm:px-4">
           <h3 className={sectionLabel}>Event Information</h3>

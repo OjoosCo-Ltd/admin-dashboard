@@ -153,6 +153,7 @@ export const SAMPLE_GROUP_OVERVIEW_KPIS: CompactKpi[] = [
   },
   {
     id: "engagement-rate",
+    feature: "groupAnalytics",
     label: "Engagement Rate",
     value: "8,194",
     badge: { label: "High", tone: "warm" },
@@ -295,6 +296,7 @@ export const SAMPLE_TOP_DISCUSSIONS: TopDiscussion[] = [
 export const SAMPLE_REPORT_KPIS: CompactKpi[] = [
   {
     id: "open-reports",
+    feature: "groupAnalytics",
     label: "Open Reports",
     value: "45,210",
     badge: { label: "Past 24h", tone: "neutral" },
@@ -307,6 +309,7 @@ export const SAMPLE_REPORT_KPIS: CompactKpi[] = [
   },
   {
     id: "avg-resolution",
+    feature: "groupAnalytics",
     label: "Avg. Resolution Time",
     value: "4.2 hrs",
     badge: { label: "Current", tone: "neutral" },

@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SAMPLE_EVENT_COMMUNITIES } from "@/constants/community-sample";
+import { FEATURES } from "@/constants/features";
 import type { CommunityEvent } from "@/types/community";
 
 const IMAGE_TYPES = ["image/svg+xml", "image/png", "image/jpeg", "image/gif"];
@@ -149,7 +150,7 @@ function EventForm({ event, onCancel }: { event?: CommunityEvent; onCancel: () =
 
       <form method="post" noValidate onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto px-6 pt-8 pb-12 max-sm:p-4">
-          <ImageDropzone currentImage={event?.imageUrl} />
+          {FEATURES.eventMedia && <ImageDropzone currentImage={event?.imageUrl} />}
 
           <Field data-invalid={Boolean(errors.title)} className="gap-2">
             <FieldLabel htmlFor={`${id}-title`} className={label}>

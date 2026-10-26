@@ -11,18 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { enabled, type Feature } from "@/constants/features";
 
 export interface RowMenuItem {
   label: string;
   /** Set apart below a rule, in red. */
   destructive?: boolean;
+  /** Left out while this feature is off. */
+  feature?: Feature;
 }
 
 /**
  * A row's ⋮ menu. The community Figmas leave their Actions columns empty, so
  * these are stand-ins. UI only: each item says it isn't available yet.
  */
-export function RowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
+export function RowMenu({ label, items: all }: { label: string; items: RowMenuItem[] }) {
+  const items = enabled(all);
   return (
     // Not modal: a modal menu locks scrolling, and hiding the scrollbar shifts the page.
     <DropdownMenu modal={false}>

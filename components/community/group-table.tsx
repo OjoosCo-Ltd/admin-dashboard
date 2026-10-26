@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { CommunityGroup } from "@/types/community";
 
 const PAGE_SIZE = 10;
@@ -91,16 +92,17 @@ const DEFAULT_FILTERS: Filters = { q: "", status: "all", category: "all", size: 
 
 // Widths from the Figma's 1,108px table, held exactly (table-fixed) so the
 // description truncates as it does there. Below 960px the table scrolls sideways.
-const COLUMNS = [
-  { label: "Group", width: "w-[27.5%]", cell: "pl-6" },
+// Without Active (30D), Group takes its share and the other columns keep theirs.
+const COLUMNS = enabled<{ label: string; width: string; cell?: string; feature?: Feature }>([
+  { label: "Group", width: FEATURES.groupAnalytics ? "w-[27.5%]" : "w-[39.6%]", cell: "pl-6" },
   { label: "Category", width: "w-[9.5%]" },
   { label: "Members", width: "w-[10.4%]", cell: "text-right" },
-  { label: "Active (30D)", width: "w-[12.1%]", cell: "text-right" },
+  { label: "Active (30D)", width: "w-[12.1%]", cell: "text-right", feature: "groupAnalytics" },
   // The Figma sets Discussions well clear of the right-aligned figures before it.
   { label: "Discussions", width: "w-[15.3%]", cell: "pl-11.5" },
   { label: "Last Activity", width: "w-[14.4%]" },
   { label: "Status", width: "w-[10.8%]", cell: "pr-6" },
-];
+]);
 
 const count = new Intl.NumberFormat("en-US");
 
@@ -277,12 +279,14 @@ function GroupTableView({
               <TableCell className="px-4 text-right text-sm tabular-nums">
                 {count.format(group.members)}
               </TableCell>
-              <TableCell className="px-4 text-right tabular-nums">
-                <span className="block text-sm/5">{count.format(group.activeMembers)}</span>
-                <span className="block text-[10px]/4 text-muted-foreground">
-                  {group.activeChange}
-                </span>
-              </TableCell>
+              {FEATURES.groupAnalytics && (
+                <TableCell className="px-4 text-right tabular-nums">
+                  <span className="block text-sm/5">{count.format(group.activeMembers)}</span>
+                  <span className="block text-[10px]/4 text-muted-foreground">
+                    {group.activeChange}
+                  </span>
+                </TableCell>
+              )}
               <TableCell className="pr-4 pl-11.5 text-sm tabular-nums">
                 {count.format(group.discussions)}
               </TableCell>

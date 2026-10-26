@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { GROUP_CATEGORIES } from "@/constants/community";
+import { FEATURES } from "@/constants/features";
 import type { CommunityGroup, GroupPrivacy } from "@/types/community";
 
 const MAX_DESCRIPTION = 500;
@@ -37,8 +38,9 @@ const MAX_ICON_BYTES = 2 * 1024 * 1024;
 const ICON_TYPES = ["image/png", "image/jpeg"];
 
 // The backend's AdminCreateGroupDto takes name, description and category, all
-// required. The icon and privacy are the Figma's; it has no fields for them yet.
-// The icon's type and size are checked as it's picked (IconPicker).
+// required. The icon and privacy are the Figma's; it has no fields for them yet,
+// so their inputs stay hidden, and they must stay out of the request body (an
+// extra property is a 400). The icon's type and size are checked as it's picked (IconPicker).
 const schema = z.object({
   icon: z.instanceof(File).nullable(),
   name: z
@@ -168,14 +170,16 @@ function GroupForm({
 
       <form method="post" noValidate onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6 max-sm:p-4">
-          <div className="grid gap-6 sm:grid-cols-[11.875rem_1fr]">
-            <Controller
-              name="icon"
-              control={form.control}
-              render={({ field }) => (
-                <IconPicker onChange={field.onChange} currentImage={group?.imageUrl} />
-              )}
-            />
+          <div className={cn("grid gap-6", FEATURES.eventMedia && "sm:grid-cols-[11.875rem_1fr]")}>
+            {FEATURES.eventMedia && (
+              <Controller
+                name="icon"
+                control={form.control}
+                render={({ field }) => (
+                  <IconPicker onChange={field.onChange} currentImage={group?.imageUrl} />
+                )}
+              />
+            )}
 
             <div className="flex min-w-0 flex-col gap-6">
               <Field data-invalid={Boolean(form.formState.errors.name)} className="gap-2">
@@ -253,57 +257,59 @@ function GroupForm({
             </div>
           </div>
 
-          <Controller
-            name="privacy"
-            control={form.control}
-            render={({ field }) => (
-              <fieldset className="mt-6 border-t border-border/50 pt-6 dark:border-border">
-                <legend className="float-left mb-3 w-full text-xs/4 font-semibold tracking-wider uppercase">
-                  Privacy &amp; Visibility
-                </legend>
-                <RadioGroupPrimitive.Root
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="clear-left grid gap-3 sm:grid-cols-2"
-                >
-                  {PRIVACY.map((option) => {
-                    const optionId = `${id}-privacy-${option.value}`;
-                    return (
-                      // The label stretches over the whole card, so any of it picks the option.
-                      <div
-                        key={option.value}
-                        className="relative flex gap-3 rounded-lg border border-border/50 bg-background p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-data-[state=checked]:border-action has-data-[state=checked]:bg-[#fcfeff] dark:border-border dark:has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/5"
-                      >
-                        <RadioGroupPrimitive.Item
-                          id={optionId}
-                          value={option.value}
-                          aria-describedby={`${optionId}-hint`}
-                          className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-[#c4c7c9] bg-background outline-none data-[state=checked]:border-action dark:border-border dark:data-[state=checked]:border-primary"
+          {FEATURES.groupPrivacy && (
+            <Controller
+              name="privacy"
+              control={form.control}
+              render={({ field }) => (
+                <fieldset className="mt-6 border-t border-border/50 pt-6 dark:border-border">
+                  <legend className="float-left mb-3 w-full text-xs/4 font-semibold tracking-wider uppercase">
+                    Privacy &amp; Visibility
+                  </legend>
+                  <RadioGroupPrimitive.Root
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="clear-left grid gap-3 sm:grid-cols-2"
+                  >
+                    {PRIVACY.map((option) => {
+                      const optionId = `${id}-privacy-${option.value}`;
+                      return (
+                        // The label stretches over the whole card, so any of it picks the option.
+                        <div
+                          key={option.value}
+                          className="relative flex gap-3 rounded-lg border border-border/50 bg-background p-3.5 transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-data-[state=checked]:border-action has-data-[state=checked]:bg-[#fcfeff] dark:border-border dark:has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/5"
                         >
-                          <RadioGroupPrimitive.Indicator className="size-2.5 rounded-full bg-action dark:bg-primary" />
-                        </RadioGroupPrimitive.Item>
-                        <div className="min-w-0">
-                          <label
-                            htmlFor={optionId}
-                            className="flex cursor-pointer items-center gap-1 text-lg/6 font-semibold after:absolute after:inset-0 after:rounded-lg"
+                          <RadioGroupPrimitive.Item
+                            id={optionId}
+                            value={option.value}
+                            aria-describedby={`${optionId}-hint`}
+                            className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-[#c4c7c9] bg-background outline-none data-[state=checked]:border-action dark:border-border dark:data-[state=checked]:border-primary"
                           >
-                            {option.icon}
-                            {option.label}
-                          </label>
-                          <p
-                            id={`${optionId}-hint`}
-                            className="mt-1 text-[13px]/5 text-muted-foreground"
-                          >
-                            {option.description}
-                          </p>
+                            <RadioGroupPrimitive.Indicator className="size-2.5 rounded-full bg-action dark:bg-primary" />
+                          </RadioGroupPrimitive.Item>
+                          <div className="min-w-0">
+                            <label
+                              htmlFor={optionId}
+                              className="flex cursor-pointer items-center gap-1 text-lg/6 font-semibold after:absolute after:inset-0 after:rounded-lg"
+                            >
+                              {option.icon}
+                              {option.label}
+                            </label>
+                            <p
+                              id={`${optionId}-hint`}
+                              className="mt-1 text-[13px]/5 text-muted-foreground"
+                            >
+                              {option.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </RadioGroupPrimitive.Root>
-              </fieldset>
-            )}
-          />
+                      );
+                    })}
+                  </RadioGroupPrimitive.Root>
+                </fieldset>
+              )}
+            />
+          )}
         </div>
 
         <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t bg-surface px-6 py-3.5 max-sm:p-4 dark:bg-muted/40">

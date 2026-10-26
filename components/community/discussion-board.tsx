@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES } from "@/constants/features";
 import { initials } from "@/libs/utils";
 import type { GroupDiscussion } from "@/types/community";
 
@@ -36,7 +37,7 @@ const VIEWS = [
   { value: "pinned", label: "Pinned" },
   { value: "reported", label: "Reported" },
   { value: "recent", label: "Recent" },
-  { value: "locked", label: "Locked" },
+  { value: "locked", label: "Locked", feature: "threadLocks" },
 ] as const;
 
 type View = (typeof VIEWS)[number]["value"];
@@ -109,7 +110,9 @@ function DiscussionBoardView({
 }) {
   const tableId = useId();
   const query = filters.q.trim().toLowerCase();
-  const filtered = query !== "" || (filters.view !== "all" && filters.view !== "recent");
+  // While locks are hidden, an old link's ?view=locked shows every discussion.
+  const view = !FEATURES.threadLocks && filters.view === "locked" ? "all" : filters.view;
+  const filtered = query !== "" || (view !== "all" && view !== "recent");
 
   // UI only: GET /admin/community/posts isn't wired, so the sample page is
   // filtered here ("Recent" is the default newest-first order) and every page
@@ -120,11 +123,11 @@ function DiscussionBoardView({
         [discussion.title, discussion.excerpt, discussion.creator.name].some((field) =>
           field.toLowerCase().includes(query),
         )) &&
-      (filters.view === "pinned"
+      (view === "pinned"
         ? discussion.status === "pinned"
-        : filters.view === "locked"
+        : view === "locked"
           ? discussion.status === "locked"
-          : filters.view === "reported"
+          : view === "reported"
             ? Boolean(discussion.reports)
             : true),
   );
@@ -164,14 +167,14 @@ function DiscussionBoardView({
         >
           {/* ml-auto right-aligns the chips while they fit. Once they overflow it falls to 0, so none is cut off at the start. */}
           <div className="ml-auto flex w-max gap-3">
-            {VIEWS.map((view) => {
-              const current = view.value === filters.view;
+            {enabled(VIEWS).map((chip) => {
+              const current = chip.value === view;
               return (
                 <button
-                  key={view.value}
+                  key={chip.value}
                   type="button"
                   aria-pressed={current}
-                  onClick={() => refine({ view: view.value })}
+                  onClick={() => refine({ view: chip.value })}
                   className={cn(
                     "flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[13px] whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                     current
@@ -179,8 +182,8 @@ function DiscussionBoardView({
                       : "border-[#dfe2e7] bg-surface text-muted-foreground hover:bg-muted dark:border-border dark:bg-input/30",
                   )}
                 >
-                  {view.label}
-                  {view.value === "reported" && reportedCount > 0 && (
+                  {chip.label}
+                  {chip.value === "reported" && reportedCount > 0 && (
                     <span className="rounded-full bg-destructive px-1.5 text-[11px]/4 font-medium text-white">
                       {reportedCount}
                       <span className="sr-only"> reported</span>
@@ -217,7 +220,12 @@ function DiscussionBoardView({
           </TableHeader>
           <TableBody>
             {rows.map((discussion) => {
-              const locked = discussion.status === "locked";
+              // Posts have no lock yet, so a locked sample thread reads as open.
+              const status =
+                !FEATURES.threadLocks && discussion.status === "locked"
+                  ? "open"
+                  : discussion.status;
+              const locked = status === "locked";
               return (
                 <TableRow
                   key={discussion.id}
@@ -289,7 +297,7 @@ function DiscussionBoardView({
                     <Metrics discussion={discussion} />
                   </TableCell>
                   <TableCell className="pr-4 pl-8">
-                    <DiscussionStatusBadge status={discussion.status} />
+                    <DiscussionStatusBadge status={status} />
                   </TableCell>
                   <TableCell className="pr-6 pl-4 text-right">
                     <RowMenu
@@ -300,7 +308,10 @@ function DiscussionBoardView({
                           label:
                             discussion.status === "pinned" ? "Unpin discussion" : "Pin discussion",
                         },
-                        { label: locked ? "Unlock thread" : "Lock thread" },
+                        {
+                          label: locked ? "Unlock thread" : "Lock thread",
+                          feature: "threadLocks",
+                        },
                         { label: "Delete discussion", destructive: true },
                       ]}
                     />

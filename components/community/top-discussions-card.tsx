@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { DashboardCard, DashboardCardTitle } from "@/components/dashboard/dashboard-card";
 import { Button } from "@/components/ui/button";
+import { FEATURES } from "@/constants/features";
 import type { TopDiscussion } from "@/types/community";
 
 /** The group's busiest threads by replies, the first ranked in teal. */
@@ -66,17 +67,19 @@ export function TopDiscussionsCard({
           </li>
         ))}
       </ol>
-      <div className="mt-11 border-t border-border/50 pt-5 dark:border-border">
-        <Button
-          variant="outline"
-          // UI only: the analytics pages have no design yet.
-          onClick={() => toast("Discussion analytics aren't available yet")}
-          className="h-10.5 w-full gap-2 rounded-md bg-surface text-base font-normal text-action hover:text-action dark:bg-input/30 dark:text-primary"
-        >
-          View Full Analytics
-          <ArrowRightIcon aria-hidden weight="bold" className="size-4" />
-        </Button>
-      </div>
+      {FEATURES.groupAnalytics && (
+        <div className="mt-11 border-t border-border/50 pt-5 dark:border-border">
+          <Button
+            variant="outline"
+            // UI only: the analytics pages have no design yet.
+            onClick={() => toast("Discussion analytics aren't available yet")}
+            className="h-10.5 w-full gap-2 rounded-md bg-surface text-base font-normal text-action hover:text-action dark:bg-input/30 dark:text-primary"
+          >
+            View Full Analytics
+            <ArrowRightIcon aria-hidden weight="bold" className="size-4" />
+          </Button>
+        </div>
+      )}
     </DashboardCard>
   );
 }

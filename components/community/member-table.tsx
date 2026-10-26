@@ -284,7 +284,10 @@ function MemberTableView({
                   label={`Actions for ${member.name}`}
                   items={[
                     { label: "View profile" },
-                    { label: member.status === "muted" ? "Unmute member" : "Mute member" },
+                    {
+                      label: member.status === "muted" ? "Unmute member" : "Mute member",
+                      feature: "memberMutes",
+                    },
                     { label: "Remove from group", destructive: true },
                     { label: "Ban from group", destructive: true },
                   ]}

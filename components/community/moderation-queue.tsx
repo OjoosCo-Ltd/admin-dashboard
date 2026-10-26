@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { ModerationCase } from "@/types/community";
 
 const PAGE_SIZE = 10;
@@ -57,17 +58,19 @@ const isPriority = (value: string): value is PriorityFilter =>
   PRIORITIES.some((option) => option.value === value);
 
 // The Figma's columns, stretched from its 978px table to the card's width.
-const COLUMNS = [
+// Without Priority, Reported Content takes its share: the ID, community and
+// reporter stack at their breaks by design, so they don't need it.
+const COLUMNS = enabled<{ label: string; width: string; cell?: string; feature?: Feature }>([
   { label: "Report ID", width: "w-[8%]", cell: "pl-4" },
-  { label: "Reported Content", width: "w-[23%]" },
+  { label: "Reported Content", width: FEATURES.reportPriority ? "w-[23%]" : "w-[32.5%]" },
   { label: "Community", width: "w-[10.5%]" },
   { label: "Reporter", width: "w-[9%]" },
   { label: "Reason", width: "w-[12.5%]" },
   { label: "Submitted", width: "w-[10%]" },
-  { label: "Priority", width: "w-[9.5%]" },
+  { label: "Priority", width: "w-[9.5%]", feature: "reportPriority" },
   { label: "Status", width: "w-[8.5%]" },
   { label: "Actions", width: "w-[9%]", cell: "pr-6 text-right" },
-];
+]);
 
 const count = new Intl.NumberFormat("en-US");
 
@@ -107,13 +110,13 @@ function ModerationQueueView({
   onChange: (next: Partial<Filters>) => void;
 }) {
   const titleId = useId();
+  // While the filter is hidden, an old link's ?priority= is ignored.
+  const priority = FEATURES.reportPriority ? filters.priority : "all";
 
   // UI only: GET /admin/community/reports isn't wired, so the sample page is
   // filtered here and every page shows the same rows.
-  const rows = cases.filter(
-    (item) => filters.priority === "all" || item.priority === filters.priority,
-  );
-  const filteredTotal = filters.priority === "all" ? total : rows.length;
+  const rows = cases.filter((item) => priority === "all" || item.priority === priority);
+  const filteredTotal = priority === "all" ? total : rows.length;
   const pageCount = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
   const page = Math.min(Math.max(filters.page, 1), pageCount);
   // The Figma counts the rows on screen: "Showing 1 to 3 of 142 entries".
@@ -126,44 +129,53 @@ function ModerationQueueView({
         <DashboardCardTitle id={titleId} className="text-xl/7 font-semibold">
           Moderation Queue
         </DashboardCardTitle>
-        <div className="flex gap-3">
-          <Select
-            value={filters.priority}
-            onValueChange={(value) => {
-              if (isPriority(value)) onChange({ priority: value, page: 1 });
-            }}
-          >
-            <SelectTrigger
-              aria-label="Filter by priority"
-              className={cn(
-                toolButton,
-                "w-auto gap-2 pr-3 pl-3.5 text-[15px] data-[size=default]:h-8 md:text-[15px] [&>svg:last-child]:text-foreground",
-              )}
-            >
-              <FunnelSimpleIcon aria-hidden weight="bold" className="size-4 text-foreground" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper" align="end">
-              {PRIORITIES.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="py-2">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            // UI only: there's no export route for the queue yet.
-            onClick={() => toast("Exporting the moderation queue isn't available yet")}
-            className={cn(toolButton, "gap-2 px-3.5 text-sm font-semibold")}
-          >
-            <DownloadSimpleIcon aria-hidden weight="bold" className="size-4" />
-            Export
-          </Button>
-        </div>
+        {(FEATURES.reportPriority || FEATURES.exports) && (
+          <div className="flex gap-3">
+            {FEATURES.reportPriority && (
+              <Select
+                value={filters.priority}
+                onValueChange={(value) => {
+                  if (isPriority(value)) onChange({ priority: value, page: 1 });
+                }}
+              >
+                <SelectTrigger
+                  aria-label="Filter by priority"
+                  className={cn(
+                    toolButton,
+                    "w-auto gap-2 pr-3 pl-3.5 text-[15px] data-[size=default]:h-8 md:text-[15px] [&>svg:last-child]:text-foreground",
+                  )}
+                >
+                  <FunnelSimpleIcon aria-hidden weight="bold" className="size-4 text-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  {PRIORITIES.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="py-2">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {FEATURES.exports && (
+              <Button
+                variant="outline"
+                // UI only: there's no export route for the queue yet.
+                onClick={() => toast("Exporting the moderation queue isn't available yet")}
+                className={cn(toolButton, "gap-2 px-3.5 text-sm font-semibold")}
+              >
+                <DownloadSimpleIcon aria-hidden weight="bold" className="size-4" />
+                Export
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
-      <Table aria-labelledby={titleId} className="min-w-245">
+      <Table
+        aria-labelledby={titleId}
+        className={FEATURES.reportPriority ? "min-w-245" : "min-w-222"}
+      >
         <colgroup>
           {COLUMNS.map((column) => (
             <col key={column.label} className={column.width} />
@@ -208,9 +220,11 @@ function ModerationQueueView({
               </TableCell>
               <TableCell className="px-3">{item.reason}</TableCell>
               <TableCell className="px-3 text-muted-foreground">{item.submitted}</TableCell>
-              <TableCell className="px-3">
-                <ModerationPriorityBadge priority={item.priority} />
-              </TableCell>
+              {FEATURES.reportPriority && (
+                <TableCell className="px-3">
+                  <ModerationPriorityBadge priority={item.priority} />
+                </TableCell>
+              )}
               <TableCell className="px-3">
                 <ModerationStatusBadge status={item.status} />
               </TableCell>
@@ -233,7 +247,7 @@ function ModerationQueueView({
                 colSpan={COLUMNS.length}
                 className="h-24 text-center text-[13px] text-muted-foreground"
               >
-                No reports at this priority.
+                {FEATURES.reportPriority ? "No reports at this priority." : "No reports to review."}
               </TableCell>
             </TableRow>
           )}
