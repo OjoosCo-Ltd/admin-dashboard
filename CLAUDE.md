@@ -13,6 +13,7 @@ npm run dev         # http://localhost:3000 (Turbopack)
 npm run lint
 npm run typecheck   # next typegen + tsc. Run it after adding routes so PageProps/RouteContext types exist
 npm run format      # Prettier + Tailwind class sorting (components/ui is skipped)
+npm run api:types   # types/api-dtos.ts from the staging spec (API_URL/docs-json, or `-- spec.json`)
 ```
 
 **Never run `npm run build` (or any build) unless Fahd asks for it.** Tell him when a build is due and give him the command. Dependency installs are fine, but say before running one.
@@ -41,6 +42,8 @@ component → hooks/api/use-<domain>.ts (React Query)
 - `API_URL` is server-only (`libs/env.ts`). Don't give it a `NEXT_PUBLIC_` prefix.
 - What the proxy returns: **401** = the session is gone (refresh token rejected, cookies cleared). The client then signs out and does a full reload to `/login?expired=1&next=…` (`libs/api/client.ts`). **503** = the refresh failed for a temporary reason; the session is kept. **403** = a cross-site POST/PATCH/DELETE, or the backend refused the call.
 - `proxy.ts` only checks whether a session cookie exists. It doesn't check that the session is valid; the backend proxy does that.
+- Request bodies and query params are generated into `types/api-dtos.ts` by `scripts/generate-api-types.mjs` (`npm run api:types`). Where the spec types a field wrong, fix it in the script's `OVERRIDES`, not in the output. The spec has no responses, so actions return `unknown` read through `libs/api/normalize.ts` (`unwrap` drops a `{ success, message, data }` envelope; `toPage` finds the list and its paging numbers) until each response is typed from a live sample.
+- Every admin endpoint has an action and a hook. `useInvalidatingMutation(fn, keys)` (`hooks/api/mutation.ts`) invalidates its keys on success. Most screens still render sample constants (see Placeholders) until they're wired.
 
 ## Auth
 
@@ -48,8 +51,9 @@ component → hooks/api/use-<domain>.ts (React Query)
 - `/api/auth/logout` revokes the session on the backend if it can, and always clears the cookies.
 - `store/use-auth-store.ts` holds only the display user (id, email, name), persisted with `skipHydration`. `AppProviders` rehydrates it after mount.
 - Supabase refresh tokens rotate. `/auth/refresh` returns camelCase with `expiresAt` in Unix seconds.
-- Auth screens (all in `proxy.ts` `PUBLIC_ROUTES`): `/login` and `/setup` use `AuthSplitLayout` (brand panel + form); `/invite`, `/forgot-password`, `/forgot-password/check-email`, `/reset-password` and `/reset-password/success` live in the `(auth)/(card)` group, which supplies the logo and footer around each page's `AuthCard`. Only `/login` is wired to the backend. The other forms are UI only: they validate, then navigate to the next screen.
-- Only `/login` sends a signed-in admin to `/dashboard` (`GUEST_ONLY_ROUTES`). Setup, invitation and recovery links arrive by email, so they must open even in a browser that holds a stale session.
+- Auth screens (all in `proxy.ts` `PUBLIC_ROUTES`): `/login` and `/setup` use `AuthSplitLayout` (brand panel + form); `/invite`, `/forgot-password`, `/forgot-password/check-email`, `/reset-password` and `/reset-password/success` live in the `(auth)/(card)` group, which supplies the logo and footer around each page's `AuthCard`. `/login` and password recovery are wired to the backend. `/setup` and `/invite` 404 while `adminInvites` is off: there's no invite or setup route (`POST /admin/users/create-admin` creates an admin with a password at once).
+- Recovery is code-based: `/forgot-password` asks the backend to email a code, `/forgot-password/check-email` checks it, and `/reset-password` sets the new password with it. Each step posts to a public route handler (`app/api/auth/password-reset/{request,verify-otp,reset}`) through `forwardPublicAuth` (`libs/auth/public-auth.ts`: cross-site check, Zod, then the backend's status passed through). The email and code live in memory only (`store/use-password-reset-store.ts`), so after a reload the screens ask for a new code.
+- Only `/login` sends a signed-in admin to `/dashboard` (`GUEST_ONLY_ROUTES`). Setup, invitation and recovery screens must open even in a browser that holds a stale session.
 - Auth `<form>`s set `method="post"`. If someone submits before hydration, the browser posts the fields instead of putting the password in the URL with a GET. After hydration RHF's `handleSubmit` prevents the native submit.
 - `safeNext` (login page) checks what `new URL` makes of `?next=`, not the raw string: `\`, tabs and dot segments can turn a "/…" path protocol-relative.
 
@@ -66,12 +70,22 @@ These copy Forj (`../HNG/Forj`), the structure reference for the Xparience repos
 
 ## Backend contract
 
-- Spec: https://staging.xparience.com/docs-json (Swagger UI at the site root). It documents request DTOs and query params but **no response bodies**. Type each response from a live sample and mark guesses `⚠️ PROVISIONAL`.
+- Spec: https://staging.xparience.com/docs-json (Swagger UI at `/docs`). The admin's routes are in it beside the member routes. It documents request DTOs and query params but **no response bodies**. Type each response from a live sample and mark guesses `⚠️ PROVISIONAL`.
 - Every DTO uses `forbidNonWhitelisted`. An extra property in a request body is a 400 that names the property; it is not silently ignored.
-- Enum spelling is mixed: roles are `"User" | "Admin" | "Moderator"`, while statuses are UPPER_SNAKE. Shared enums are in `types/api.ts`.
+- Enum spelling is mixed: roles are `"User" | "Admin" | "Moderator"`, while statuses are UPPER_SNAKE. Shared enums are in `types/api.ts`. Those three are the only roles: the Figma's Super Admin and Support (in the sample admins) don't exist on the backend.
 - Errors are NestJS's default `{ message: string | string[], error, statusCode }`. `ApiError` joins array messages.
 - Profile images come back as absolute Supabase signed URLs. Add that host to `images.remotePatterns` in `next.config.ts` before using `next/image` for them.
 - `../Xparience-Mobile/BACKEND_UI_GAPS.md` has long notes on known backend bugs (community, events, verification). Read it before probing an endpoint by hand.
+
+## Feature flags
+
+The backend team wants every feature it can't serve yet hidden until it can. The 2026-10-22 "Admin Endpoint Audit" (a Claude Doc) lists each one, why, and the backend request that unblocks it.
+
+- `constants/features.ts` holds one flag per missing capability, all `false`. When an endpoint ships: flip its flag, wire the feature, and mark the request Shipped in the audit.
+- A whole section: its route's `layout.tsx` calls `requireFeature("flag")` (`libs/feature-gate.ts`), which 404s the route while the flag is off. Nav items, tabs, menu items, KPIs, columns and filter options carry `feature` and go through `enabled()`. Anything else is `FEATURES.flag && …`.
+- Hidden routes: Well-being, Subscriptions, Payments, AI Center, Notifications, a group's Members tab, `/setup`, `/invite`, and Settings › Notifications, Language & Region, Permissions, Audit Logs, Community and Well-being. Exports, date ranges, announcements, presence and insight cards are hidden everywhere.
+- What's left closes up: grids pick their columns from how many cards remain, table columns keep their proportions (`share`), and page descriptions name only what's shown. A URL param for a hidden filter (`?plan=`, `?priority=`, a hidden search's `?q=`) is ignored. Sample rows that only make sense with a hidden capability (reported, live, AI-raised) stay off the lists.
+- The sections below describe the full design, hidden parts included.
 
 ## Theme
 
@@ -206,8 +220,8 @@ The admin Figma is the reference, not the mobile app. The light tokens were samp
 
 These are waiting on designs. Replace them; don't build on them. The data wiring underneath stays.
 
-- `components/auth/forgot-password-form.tsx`: the Figma has no frame for the forgot-password step yet
-- the sample email and invitation in `app/(auth)/setup/page.tsx` and `app/(auth)/(card)/invite/page.tsx` (UI only; the real values come from the setup and invitation links)
+- `components/auth/forgot-password-form.tsx` and `components/auth/verify-code-form.tsx`: the Figma has no frame for the email or code steps yet (both are wired)
+- the sample email and invitation in `app/(auth)/setup/page.tsx` and `app/(auth)/(card)/invite/page.tsx` (UI only, and hidden behind `adminInvites`; the real values would come from setup and invitation links)
 - `constants/dashboard-sample.ts`: the dashboard overview renders the Figma's sample figures until `/admin/dashboard/*` is typed (shapes in `types/dashboard.ts`) and wired. That includes the sample verification request and the announcement audience sizes.
 - `constants/users-sample.ts`: the Users page's sample figures and one page of sample users, filtered in the browser. GET `/admin/users` filters only by `search` and account `status`, so the Location and Plan filters, and Verified/Pending under Status, need backend support before they can be wired.
 - `constants/matches-sample.ts`: the Matches page's sample figures, plus two high-confidence and six recent matches (shapes in `types/matches.ts`). The backend's match statuses are PENDING, ACCEPTED, REJECTED, EXPIRED and UNMATCHED, so the Figma's "Reported" has no equivalent yet. Remove Match corresponds to POST `/admin/matching/{id}/invalidate`. Flag and Exclude have no endpoints yet.
@@ -217,7 +231,7 @@ These are waiting on designs. Replace them; don't build on them. The data wiring
   - GET `/admin/virtual-dates` filters by `status` (PENDING … COMPLETED, MISSED) and `kind` (MOVIE, MEAL, GAME, SHOP, the four themes). The Figma's "Live" has no status yet.
   - Cancel session corresponds to POST `/admin/virtual-dates/{id}/cancel`.
   - The row menu's other items and the reported-session review are UI only.
-- `constants/conversations-sample.ts`: every Conversations figure and three sample conversations with their evidence transcripts (shapes in `types/conversations.ts`). The filters run on the sample rows in the browser. Warn, Suspend, Flag and Log Review have no endpoints yet. The warning reasons and templates, the timed-suspension copy and the team list are ⚠️ PROVISIONAL.
+- `constants/conversations-sample.ts`: every Conversations figure and three sample conversations with their evidence transcripts (shapes in `types/conversations.ts`). The filters run on the sample rows in the browser. Warn, Flag and Log Review have no endpoints yet; Suspend corresponds to POST `/admin/users/{id}/suspend`, which needs a reason. The warning reasons and templates, the timed-suspension copy and the team list are ⚠️ PROVISIONAL.
 - `constants/community-sample.ts`: every Community figure, the three sample groups, members, discussions and reports, three events and three moderation cases (shapes in `types/community.ts`). Every group's dashboard shows Book Lovers' figures. The filters and search run on the sample rows in the browser.
   - The table's categories are the Figma's (Lifestyle, Creative, Outdoors). The create and edit dialogs offer the backend's ten (`GROUP_CATEGORIES` in `constants/community.ts`, from `AdminCreateGroupDto`).
   - POST and PATCH `/admin/community/groups` take only name, description and category, so the icon and privacy have nowhere to go yet. The success screen is shown even though nothing is saved, and a toast says so.
