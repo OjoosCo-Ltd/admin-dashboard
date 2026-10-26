@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type {
   DateAttendance,
   DateSessionStatus,
@@ -41,13 +42,14 @@ import type {
 
 const PAGE_SIZE = 10;
 
-const STATUSES: { value: DateStatusFilter; label: string }[] = [
+// An invitation records only when it starts, so Live waits on attendance data.
+const STATUSES = enabled<{ value: DateStatusFilter; label: string; feature?: Feature }>([
   { value: "all", label: "All" },
   { value: "completed", label: "Completed" },
-  { value: "live", label: "Live" },
+  { value: "live", label: "Live", feature: "dateAttendance" },
   { value: "upcoming", label: "Upcoming" },
   { value: "cancelled", label: "Cancelled" },
-];
+]);
 
 // Kept in the URL, so a filtered list can be shared and survives a reload.
 const FILTERS = {
@@ -103,18 +105,22 @@ const STATUS: Record<DateSessionStatus, { label: string; className: string }> = 
   },
 };
 
-// The Figma's 1,122px table; it scrolls sideways below its minimum width.
-const COLUMNS = [
-  { label: "Date ID", width: "w-[10%]" },
-  { label: "Participants", width: "w-[14%]" },
-  { label: "Theme", width: "w-[10%]" },
-  { label: "Scheduled time", width: "w-[12%]" },
-  { label: "Duration", width: "w-[10%]" },
-  { label: "Attendance", width: "w-[13%]" },
-  { label: "Rating", width: "w-[9%]" },
-  { label: "Status", width: "w-[12%]" },
-  { label: "Actions", width: "w-[10%]", align: "text-center" },
+// The Figma's 1,122px table; it scrolls sideways below its minimum width. Each
+// share is the column's percent of the full table; the columns on show split
+// the width in those proportions.
+const COLUMNS: { label: string; share: number; align?: string; feature?: Feature }[] = [
+  { label: "Date ID", share: 10 },
+  { label: "Participants", share: 14 },
+  { label: "Theme", share: 10 },
+  { label: "Scheduled time", share: 12 },
+  { label: "Duration", share: 10, feature: "dateAttendance" },
+  { label: "Attendance", share: 13, feature: "dateAttendance" },
+  { label: "Rating", share: 9 },
+  { label: "Status", share: 12 },
+  { label: "Actions", share: 10, align: "text-center" },
 ];
+const VISIBLE_COLUMNS = enabled(COLUMNS);
+const SHARE_TOTAL = VISIBLE_COLUMNS.reduce((sum, column) => sum + column.share, 0);
 
 const edges = "px-3 first:pl-6 last:pr-6";
 
@@ -156,10 +162,18 @@ function DateScheduleView({
   onChange,
 }: CardProps & { filters: Filters; onChange: (next: Partial<Filters>) => void }) {
   const titleId = useId();
+  // A reported row hides who took part until a moderator opens its review, so
+  // it stays off the list until reviews can open. A live row needs a state the
+  // backend doesn't record yet.
+  const listed = sessions.filter(
+    (session) =>
+      (FEATURES.dateReports || !session.flagged) &&
+      (FEATURES.dateAttendance || session.status !== "live"),
+  );
   const rows =
     filters.status === "all"
-      ? sessions
-      : sessions.filter((session) => session.status === filters.status);
+      ? listed
+      : listed.filter((session) => session.status === filters.status);
   const total = filters.status === "all" ? totalCount : rows.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(filters.page, 1), pageCount);
@@ -207,15 +221,18 @@ function DateScheduleView({
         </div>
       </div>
 
-      <Table aria-labelledby={titleId} className="min-w-260">
+      <Table
+        aria-labelledby={titleId}
+        className={FEATURES.dateAttendance ? "min-w-260" : "min-w-200"}
+      >
         <colgroup>
-          {COLUMNS.map((column) => (
-            <col key={column.label} className={column.width} />
+          {VISIBLE_COLUMNS.map((column) => (
+            <col key={column.label} style={{ width: `${(column.share / SHARE_TOTAL) * 100}%` }} />
           ))}
         </colgroup>
         <TableHeader className="[&_tr]:border-muted-strong dark:[&_tr]:border-border">
           <TableRow className="border-t bg-[#f9f9fb] hover:bg-[#f9f9fb] dark:bg-muted/50 dark:hover:bg-muted/50">
-            {COLUMNS.map((column) => (
+            {VISIBLE_COLUMNS.map((column) => (
               <TableHead
                 key={column.label}
                 className={cn(
@@ -285,27 +302,31 @@ function DateScheduleView({
                     {day.format(new Date(session.startsAt))}
                   </time>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {clock.format(new Date(session.startsAt))} -{" "}
-                    {clock.format(new Date(session.endsAt))}
+                    {clock.format(new Date(session.startsAt))}
+                    {FEATURES.dateAttendance && <> - {clock.format(new Date(session.endsAt))}</>}
                   </span>
                 </TableCell>
-                <TableCell className={cn(edges, "py-5 text-lg tabular-nums")}>
-                  {session.durationMinutes}m
-                </TableCell>
-                <TableCell className={cn(edges, "py-5")}>
-                  <span
-                    className={cn(
-                      "inline-flex max-w-28 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] leading-4 font-bold whitespace-normal",
-                      attendance.className,
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className={cn("size-1.5 shrink-0 rounded-full", attendance.dot)}
-                    />
-                    {attendance.label}
-                  </span>
-                </TableCell>
+                {FEATURES.dateAttendance && (
+                  <>
+                    <TableCell className={cn(edges, "py-5 text-lg tabular-nums")}>
+                      {session.durationMinutes}m
+                    </TableCell>
+                    <TableCell className={cn(edges, "py-5")}>
+                      <span
+                        className={cn(
+                          "inline-flex max-w-28 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] leading-4 font-bold whitespace-normal",
+                          attendance.className,
+                        )}
+                      >
+                        <span
+                          aria-hidden
+                          className={cn("size-1.5 shrink-0 rounded-full", attendance.dot)}
+                        />
+                        {attendance.label}
+                      </span>
+                    </TableCell>
+                  </>
+                )}
                 <TableCell className={cn(edges, "py-5")}>
                   {session.rating ? (
                     <span className="flex items-center gap-0.5 text-lg font-semibold text-[#f59e0c] tabular-nums">
@@ -352,9 +373,11 @@ function DateScheduleView({
                         <DropdownMenuItem onSelect={() => notYet("Session details")}>
                           View session details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => notYet("Messaging participants")}>
-                          Message participants
-                        </DropdownMenuItem>
+                        {FEATURES.memberMessaging && (
+                          <DropdownMenuItem onSelect={() => notYet("Messaging participants")}>
+                            Message participants
+                          </DropdownMenuItem>
+                        )}
                         {(session.status === "upcoming" || session.status === "live") && (
                           <>
                             <DropdownMenuSeparator />
@@ -377,7 +400,7 @@ function DateScheduleView({
           {rows.length === 0 && (
             <TableRow className="hover:bg-transparent">
               <TableCell
-                colSpan={COLUMNS.length}
+                colSpan={VISIBLE_COLUMNS.length}
                 className="h-32 text-center text-muted-foreground"
               >
                 No sessions with this status.

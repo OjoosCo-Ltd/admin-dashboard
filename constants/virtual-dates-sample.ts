@@ -36,6 +36,7 @@ export const SAMPLE_DATE_KPIS: CompactKpi[] = [
   },
   {
     id: "avg-duration",
+    feature: "dateAttendance",
     label: "Average Session Duration",
     value: "42 min",
     change: { label: "15m", direction: "up", favorable: true, comparison: "vs last month" },
@@ -49,6 +50,7 @@ export const SAMPLE_DATE_KPIS: CompactKpi[] = [
   },
   {
     id: "revenue",
+    feature: "payments",
     label: "Revenue Generated",
     value: "$14,290",
     change: { label: "5.4%", direction: "up", favorable: true, comparison: "vs yesterday" },
@@ -62,6 +64,7 @@ export const SAMPLE_DATE_KPIS: CompactKpi[] = [
   },
   {
     id: "reported",
+    feature: "dateReports",
     label: "Reported Sessions",
     value: "14",
     change: { label: "+3", direction: "up", favorable: false, comparison: "vs last month" },

@@ -13,6 +13,7 @@ import {
 import { DateThemesCard } from "@/components/virtual-dates/date-themes-card";
 import { SatisfactionCard } from "@/components/virtual-dates/satisfaction-card";
 import { SessionStatusCard } from "@/components/virtual-dates/session-status-card";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import {
   SAMPLE_DATE_ACTIVITY,
   SAMPLE_DATE_INSIGHTS,
@@ -26,6 +27,16 @@ import {
 
 export const metadata: Metadata = { title: "Virtual Dates" };
 
+// The description names only what the page shows.
+const TOPICS = enabled<{ label: string; feature?: Feature }>([
+  { label: "bookings" },
+  { label: "attendance", feature: "dateAttendance" },
+  { label: "engagement" },
+  { label: "ratings" },
+  { label: "moderation" },
+  { label: "revenue", feature: "payments" },
+]).map((topic) => topic.label);
+
 // UI only: every section renders the Figma's sample figures until
 // /admin/virtual-dates and its stats are typed and wired.
 export default function VirtualDatesPage() {
@@ -33,7 +44,7 @@ export default function VirtualDatesPage() {
     <>
       <PageHeader
         title="Virtual Dates"
-        description="Monitor bookings, attendance, engagement, ratings, moderation, and revenue from virtual date experiences."
+        description={`Monitor ${new Intl.ListFormat("en-US").format(TOPICS)} from virtual date experiences.`}
       >
         <DateRangeSelect />
         <ExportReportButton />
@@ -46,7 +57,7 @@ export default function VirtualDatesPage() {
       <div className="grid gap-6 xl:grid-cols-12">
         <DateThemesCard themes={SAMPLE_DATE_THEMES} className="xl:col-span-5" />
         <div className="flex flex-col gap-6 xl:col-span-7">
-          <DateInsightsCard insights={SAMPLE_DATE_INSIGHTS} />
+          {FEATURES.insights && <DateInsightsCard insights={SAMPLE_DATE_INSIGHTS} />}
           <SatisfactionCard data={SAMPLE_SATISFACTION} className="flex-1" />
         </div>
       </div>

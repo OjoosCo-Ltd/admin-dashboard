@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FEATURES } from "@/constants/features";
 import type { DateActivityPoint } from "@/types/virtual-dates";
 
 // The action and review tokens are inlined by Tailwind, so there are no CSS variables to point at.
@@ -20,6 +21,13 @@ const chartConfig = {
   bookings: { label: "Bookings", color: "#006481" },
   revenue: { label: "Revenue", color: "#486270" },
 } satisfies ChartConfig;
+
+const SERIES: (keyof typeof chartConfig)[] = FEATURES.payments
+  ? ["bookings", "revenue"]
+  : ["bookings"];
+
+/** What the chart's label and table caption say it plots. */
+const PLOTTED = FEATURES.payments ? "Bookings and revenue" : "Bookings";
 
 const RANGES = [
   { value: "7", label: "Last 7 Days" },
@@ -51,7 +59,7 @@ function ActivityTooltip({
     <div className="rounded-md bg-[#021f2a] px-2.5 py-2 text-xs/5 font-semibold text-white shadow-lg">
       <p>{point.label}:</p>
       <p>Bookings: {count.format(point.bookings)}</p>
-      <p>Rev: {money.format(point.revenue)}</p>
+      {FEATURES.payments && <p>Rev: {money.format(point.revenue)}</p>}
     </div>
   );
 }
@@ -67,9 +75,11 @@ export function DateActivityCard({
   const [range, setRange] = useState("30");
   const points = data.slice(-Number(range));
   const ticks = weeklyTicks(points.map((point) => point.label));
-  // Opens on the best revenue day, where the Figma shows its callout.
+  // Opens on the best revenue day, where the Figma shows its callout, or the
+  // busiest day while revenue is hidden.
+  const peakBy = FEATURES.payments ? "revenue" : "bookings";
   const peak = points.reduce(
-    (best, point, index) => (point.revenue > points[best].revenue ? index : best),
+    (best, point, index) => (point[peakBy] > points[best][peakBy] ? index : best),
     0,
   );
 
@@ -86,7 +96,7 @@ export function DateActivityCard({
         </div>
         <div className="flex items-center gap-5">
           <ul className="flex items-center gap-3 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-            {(["bookings", "revenue"] as const).map((key) => (
+            {SERIES.map((key) => (
               <li key={key} className="flex items-center gap-1.5">
                 <span
                   aria-hidden
@@ -124,7 +134,7 @@ export function DateActivityCard({
             key={range}
             data={points}
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-            aria-label={`Bookings and revenue per day, last ${range} days`}
+            aria-label={`${PLOTTED} per day, last ${range} days`}
           >
             <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.25} />
             <XAxis
@@ -153,7 +163,9 @@ export function DateActivityCard({
               )}
             />
             <YAxis yAxisId="bookings" hide domain={[0, "dataMax + 10"]} />
-            <YAxis yAxisId="revenue" hide orientation="right" domain={[0, "dataMax + 400"]} />
+            {FEATURES.payments && (
+              <YAxis yAxisId="revenue" hide orientation="right" domain={[0, "dataMax + 400"]} />
+            )}
             <Tooltip
               defaultIndex={peak}
               cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
@@ -169,29 +181,33 @@ export function DateActivityCard({
               activeDot={{ r: 3, strokeWidth: 0, fill: "var(--color-bookings)" }}
               isAnimationActive={false}
             />
-            <Line
-              yAxisId="revenue"
-              dataKey="revenue"
-              type="monotone"
-              stroke="var(--color-revenue)"
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
-              dot={false}
-              activeDot={{ r: 3, strokeWidth: 0, fill: "var(--color-revenue)" }}
-              isAnimationActive={false}
-            />
+            {FEATURES.payments && (
+              <Line
+                yAxisId="revenue"
+                dataKey="revenue"
+                type="monotone"
+                stroke="var(--color-revenue)"
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
+                dot={false}
+                activeDot={{ r: 3, strokeWidth: 0, fill: "var(--color-revenue)" }}
+                isAnimationActive={false}
+              />
+            )}
           </LineChart>
         </ChartContainer>
       </div>
 
       <div className="sr-only">
         <table>
-          <caption>Bookings and revenue per day, last {range} days</caption>
+          <caption>
+            {PLOTTED} per day, last {range} days
+          </caption>
           <thead>
             <tr>
               <th scope="col">Day</th>
               <th scope="col">Bookings</th>
-              <th scope="col">Revenue</th>
+              {FEATURES.payments && <th scope="col">Revenue</th>}
             </tr>
           </thead>
           <tbody>
@@ -199,7 +215,7 @@ export function DateActivityCard({
               <tr key={point.label}>
                 <th scope="row">{point.label}</th>
                 <td>{count.format(point.bookings)}</td>
-                <td>{money.format(point.revenue)}</td>
+                {FEATURES.payments && <td>{money.format(point.revenue)}</td>}
               </tr>
             ))}
           </tbody>
