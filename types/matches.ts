@@ -1,3 +1,5 @@
+import type { Feature } from "@/constants/features";
+
 /**
  * Shapes the Matches page renders. ⚠️ PROVISIONAL: modeled on the Figma, not on
  * API responses. GET /admin/matching (ENDPOINTS.matching.list) filters by a
@@ -57,6 +59,8 @@ export interface FunnelStage {
   label: string;
   /** Share of generated matches that reach this stage. */
   percent: number;
+  /** The capability the stage waits on, while the backend can't count it. */
+  feature?: Feature;
 }
 
 export interface ScoreDistribution {

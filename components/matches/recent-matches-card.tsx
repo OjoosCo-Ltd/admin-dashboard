@@ -37,17 +37,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FEATURES } from "@/constants/features";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { MatchDetail, MatchStatusFilter } from "@/types/matches";
 
 const PAGE_SIZE = 10;
 
-const STATUSES: { value: MatchStatusFilter; label: string }[] = [
+// Matches have no reported state on the backend yet (matchFlags).
+const STATUSES = enabled<{ value: MatchStatusFilter; label: string; feature?: Feature }>([
   { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
-  { value: "reported", label: "Reported" },
+  { value: "reported", label: "Reported", feature: "matchFlags" },
   { value: "pending", label: "Pending" },
-];
+]);
 
 // Kept in the URL, so a filtered list can be shared and survives a reload.
 const FILTERS = {
@@ -113,8 +114,12 @@ function RecentMatchesView({
   onChange,
 }: CardProps & { filters: Filters; onChange: (next: Partial<Filters>) => void }) {
   const titleId = useId();
+  // A reported sample row stays off the list while there's no reported state.
+  const listed = FEATURES.matchFlags
+    ? matches
+    : matches.filter((match) => match.status !== "reported");
   const rows =
-    filters.status === "all" ? matches : matches.filter((match) => match.status === filters.status);
+    filters.status === "all" ? listed : listed.filter((match) => match.status === filters.status);
   const total = filters.status === "all" ? totalCount : rows.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(filters.page, 1), pageCount);

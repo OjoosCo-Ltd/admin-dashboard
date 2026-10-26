@@ -73,7 +73,7 @@ export const SAMPLE_MATCH_ACTIVITY: MatchActivityPoint[] = [
 
 export const SAMPLE_ENGAGEMENT_FUNNEL: FunnelStage[] = [
   { label: "Matches Generated", percent: 100 },
-  { label: "Profiles Viewed", percent: 88 },
+  { label: "Profiles Viewed", percent: 88, feature: "profileViews" },
   { label: "Matches Accepted", percent: 72 },
   { label: "Conversation Started", percent: 45 },
   { label: "Virtual Date", percent: 12 },
