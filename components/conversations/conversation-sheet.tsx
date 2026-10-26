@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { FEATURES } from "@/constants/features";
 import { initials } from "@/libs/utils";
 import type { Conversation, SafetyCheck } from "@/types/conversations";
 
@@ -186,33 +187,35 @@ function SheetContents({
           </dl>
         </section>
 
-        <AiInsights conversation={conversation} />
+        {FEATURES.aiMetrics && <AiInsights conversation={conversation} />}
 
-        <section className="mt-6">
-          <ActionDialogLabel asChild>
-            <h3>Safety Analysis</h3>
-          </ActionDialogLabel>
-          <dl className="mt-3 flex flex-col gap-1">
-            {conversation.safetyChecks.map((check) => {
-              const style = CHECK_STYLES[check.result];
-              return (
-                <div
-                  key={check.id}
-                  className={cn(
-                    card,
-                    "flex min-h-10.5 items-center justify-between gap-4 px-3 py-2",
-                    style.row,
-                  )}
-                >
-                  <dt className="text-[13px]/5">{check.label}</dt>
-                  <dd className={cn("shrink-0 text-[11px]/4 font-medium", style.text)}>
-                    {style.label}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </section>
+        {FEATURES.aiMetrics && (
+          <section className="mt-6">
+            <ActionDialogLabel asChild>
+              <h3>Safety Analysis</h3>
+            </ActionDialogLabel>
+            <dl className="mt-3 flex flex-col gap-1">
+              {conversation.safetyChecks.map((check) => {
+                const style = CHECK_STYLES[check.result];
+                return (
+                  <div
+                    key={check.id}
+                    className={cn(
+                      card,
+                      "flex min-h-10.5 items-center justify-between gap-4 px-3 py-2",
+                      style.row,
+                    )}
+                  >
+                    <dt className="text-[13px]/5">{check.label}</dt>
+                    <dd className={cn("shrink-0 text-[11px]/4 font-medium", style.text)}>
+                      {style.label}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        )}
 
         {/* The Figma breaks the notice after "or"; the cap keeps that break. */}
         <p className="mt-6 rounded-md border border-border/20 bg-muted/50 p-3 text-[11px]/3.5 text-muted-foreground italic dark:border-border">
@@ -258,18 +261,24 @@ function SheetActions({
       ) : (
         <NoEvidenceButton />
       )}
-      <FlagConversationDialog
-        {...dialog("flag")}
-        trigger={
-          <Button variant="outline" className={outlineButton}>
-            Flag for Review
-          </Button>
-        }
-      />
+      {FEATURES.conversationFlags && (
+        <FlagConversationDialog
+          {...dialog("flag")}
+          trigger={
+            <Button variant="outline" className={outlineButton}>
+              Flag for Review
+            </Button>
+          }
+        />
+      )}
+      {/* Without Flag beside it, Warn takes the whole row. */}
       <WarnUserDialog
         {...dialog("warn")}
         trigger={
-          <Button variant="outline" className={outlineButton}>
+          <Button
+            variant="outline"
+            className={cn(outlineButton, !FEATURES.conversationFlags && "col-span-2")}
+          >
             Warn User
           </Button>
         }

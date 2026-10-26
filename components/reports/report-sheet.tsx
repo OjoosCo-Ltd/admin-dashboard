@@ -13,6 +13,7 @@ import { BanAccountDialog } from "@/components/reports/ban-account-dialog";
 import { CATEGORY_LABELS, reportInitials, riskVerdict } from "@/components/reports/report-styles";
 import { Dialog } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { FEATURES } from "@/constants/features";
 import type { SafetyReport } from "@/types/reports";
 
 const sectionLabel =
@@ -81,16 +82,18 @@ function ReportDetail({
             <span className="rounded-full bg-muted-strong px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase dark:bg-muted">
               {CATEGORY_LABELS[report.category]}
             </span>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase",
-                report.aiRisk >= 80
-                  ? "bg-[#f8e8e8] text-destructive dark:bg-destructive/20"
-                  : "bg-[#f3ede7] text-caution dark:bg-caution/30 dark:text-[#e9b97c]",
-              )}
-            >
-              AI Risk: {report.aiRisk}/100 ({riskVerdict(report.aiRisk)})
-            </span>
+            {FEATURES.aiMetrics && (
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase",
+                  report.aiRisk >= 80
+                    ? "bg-[#f8e8e8] text-destructive dark:bg-destructive/20"
+                    : "bg-[#f3ede7] text-caution dark:bg-caution/30 dark:text-[#e9b97c]",
+                )}
+              >
+                AI Risk: {report.aiRisk}/100 ({riskVerdict(report.aiRisk)})
+              </span>
+            )}
           </div>
         </div>
         <DialogPrimitive.Close className="-mr-1 rounded-md p-1 text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50">
@@ -185,28 +188,30 @@ function ReportDetail({
           </div>
         </section>
 
-        <section className="mt-9">
-          <h3 className={sectionLabel}>AI Safety Analysis</h3>
-          <dl className="mt-4 flex flex-col gap-3.5 rounded-xl border border-border/60 bg-background px-5 py-5 dark:border-border dark:bg-card">
-            {report.analysis.map((signal) => (
-              <div key={signal.label}>
-                <div className="flex items-center justify-between gap-3 text-xs font-semibold">
-                  <dt>{signal.label}</dt>
-                  <dd className="tabular-nums">{signal.score}%</dd>
+        {FEATURES.aiMetrics && (
+          <section className="mt-9">
+            <h3 className={sectionLabel}>AI Safety Analysis</h3>
+            <dl className="mt-4 flex flex-col gap-3.5 rounded-xl border border-border/60 bg-background px-5 py-5 dark:border-border dark:bg-card">
+              {report.analysis.map((signal) => (
+                <div key={signal.label}>
+                  <div className="flex items-center justify-between gap-3 text-xs font-semibold">
+                    <dt>{signal.label}</dt>
+                    <dd className="tabular-nums">{signal.score}%</dd>
+                  </div>
+                  <div aria-hidden className="mt-1.5 h-1.5 rounded-full bg-container dark:bg-muted">
+                    <div
+                      className={cn(
+                        "h-full rounded-full",
+                        signal.score >= 50 ? "bg-destructive" : "bg-action dark:bg-primary",
+                      )}
+                      style={{ width: `${signal.score}%` }}
+                    />
+                  </div>
                 </div>
-                <div aria-hidden className="mt-1.5 h-1.5 rounded-full bg-container dark:bg-muted">
-                  <div
-                    className={cn(
-                      "h-full rounded-full",
-                      signal.score >= 50 ? "bg-destructive" : "bg-action dark:bg-primary",
-                    )}
-                    style={{ width: `${signal.score}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </dl>
-        </section>
+              ))}
+            </dl>
+          </section>
+        )}
 
         <section className="mt-9">
           <h3 className={sectionLabel}>

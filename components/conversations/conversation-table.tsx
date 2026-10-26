@@ -50,6 +50,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FEATURES } from "@/constants/features";
 import { initials } from "@/libs/utils";
 import type { Conversation, SafetyStatus } from "@/types/conversations";
 
@@ -417,16 +418,18 @@ function RowActions(props: RowActionsProps) {
       >
         <EyeIcon aria-hidden weight="bold" className="size-4.75" />
       </button>
-      <FlagConversationDialog
-        conversation={conversation}
-        open={dialog === "flag"}
-        onOpenChange={(open) => onDialogChange(open ? "flag" : null)}
-        trigger={
-          <button type="button" aria-label={`Flag ${name} for review`} className={iconButton}>
-            <WarningOctagonIcon aria-hidden weight="bold" className="size-4.5" />
-          </button>
-        }
-      />
+      {FEATURES.conversationFlags && (
+        <FlagConversationDialog
+          conversation={conversation}
+          open={dialog === "flag"}
+          onOpenChange={(open) => onDialogChange(open ? "flag" : null)}
+          trigger={
+            <button type="button" aria-label={`Flag ${name} for review`} className={iconButton}>
+              <WarningOctagonIcon aria-hidden weight="bold" className="size-4.5" />
+            </button>
+          }
+        />
+      )}
     </div>
   );
 }
@@ -490,7 +493,11 @@ function ReportedRowActions({ conversation, dialog, onDialogChange, onView }: Ro
           >
             View details
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => openFromMenu("flag")}>Flag for review</DropdownMenuItem>
+          {FEATURES.conversationFlags && (
+            <DropdownMenuItem onSelect={() => openFromMenu("flag")}>
+              Flag for review
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={() => openFromMenu("warn")}>Warn user</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => openFromMenu("suspend")}>
@@ -498,7 +505,9 @@ function ReportedRowActions({ conversation, dialog, onDialogChange, onView }: Ro
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <FlagConversationDialog {...dialogProps("flag")} onCloseAutoFocus={returnToMenu} />
+      {FEATURES.conversationFlags && (
+        <FlagConversationDialog {...dialogProps("flag")} onCloseAutoFocus={returnToMenu} />
+      )}
       <WarnUserDialog {...dialogProps("warn")} onCloseAutoFocus={returnToMenu} />
       <SuspendAccountDialog {...dialogProps("suspend")} onCloseAutoFocus={returnToMenu} />
     </div>

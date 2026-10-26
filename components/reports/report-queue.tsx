@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { enabled, FEATURES, type Feature } from "@/constants/features";
 import type { ReportPriority, ReportStatus, SafetyReport } from "@/types/reports";
 
 const PAGE_SIZE = 10;
@@ -57,6 +58,24 @@ interface Filters {
 }
 
 const DEFAULTS: Filters = { q: "", priority: "all", status: "all", page: 1, report: null };
+
+// Widths, in percent, at the Figma's full width. A hidden column's share goes to
+// the others, in proportion, and comes off the table's minimum width.
+const COLUMNS = enabled<{ label: string; width: number; className?: string; feature?: Feature }>([
+  { label: "Report ID", width: 9, className: "pl-8" },
+  { label: "Reported User", width: 17, className: "pl-3" },
+  { label: "Reporter", width: 13 },
+  { label: "Category", width: 13, className: "pl-3" },
+  { label: "AI Risk", width: 6, className: "text-center", feature: "aiMetrics" },
+  { label: "Priority", width: 11, className: "pl-5", feature: "reportPriority" },
+  { label: "Submitted", width: 11 },
+  { label: "Status", width: 12 },
+  { label: "Action", width: 8, className: "pr-6 text-right" },
+]);
+
+const TOTAL_WIDTH = COLUMNS.reduce((sum, column) => sum + column.width, 0);
+/** The table's minimum width with every column shown. */
+const FULL_MIN_WIDTH_REM = 65;
 
 interface QueueProps {
   /** UI only: one sample page, filtered here. */
@@ -89,18 +108,24 @@ function QueueView({
   // The row button that opened the sheet, so focus can go back to it.
   const opener = useRef<HTMLElement | null>(null);
   const query = filters.q.trim().toLowerCase();
+  // An old link's ?priority can't filter by a column that isn't shown.
+  const priorityFilter = FEATURES.reportPriority ? filters.priority : "all";
+  // Reports raised by the AI scan stay out until there's AI data behind them.
+  const visible = FEATURES.aiMetrics
+    ? reports
+    : reports.filter((report) => report.reporter.kind === "member");
 
-  const filtered = reports.filter(
+  const filtered = visible.filter(
     (report) =>
       (!query ||
         [report.id, report.reportedUser.name, report.reportedUser.uid, report.reporter.name]
           .join(" ")
           .toLowerCase()
           .includes(query)) &&
-      (filters.priority === "all" || report.priority === filters.priority) &&
+      (priorityFilter === "all" || report.priority === priorityFilter) &&
       (filters.status === "all" || report.status === filters.status),
   );
-  const filtering = Boolean(query) || filters.priority !== "all" || filters.status !== "all";
+  const filtering = Boolean(query) || priorityFilter !== "all" || filters.status !== "all";
   // Unfiltered, every page shows the same sample rows; filtered, the matches are paged here.
   const total = filtering ? filtered.length : totalCount;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -108,7 +133,7 @@ function QueueView({
   const rows = filtering ? filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : filtered;
   const first = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const last = Math.min(page * PAGE_SIZE, total);
-  const open = reports.find((report) => report.id === filters.report) ?? null;
+  const open = visible.find((report) => report.id === filters.report) ?? null;
 
   const openReport = (report: SafetyReport, from: HTMLElement) => {
     opener.current = from;
@@ -144,27 +169,31 @@ function QueueView({
               aria-label="Filter reports"
               className={cn(
                 "relative flex size-9 shrink-0 items-center justify-center rounded-full border border-[#dbe1e5] outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-border",
-                (filters.priority !== "all" || filters.status !== "all") &&
+                (priorityFilter !== "all" || filters.status !== "all") &&
                   "border-action text-action",
               )}
             >
               <FunnelSimpleIcon aria-hidden weight="bold" className="size-4.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuLabel>Priority</DropdownMenuLabel>
-              <DropdownMenuRadioGroup
-                value={filters.priority}
-                onValueChange={(priority) =>
-                  onChange({ priority: priority as Filters["priority"], page: 1 })
-                }
-              >
-                {PRIORITIES.map((value) => (
-                  <DropdownMenuRadioItem key={value} value={value}>
-                    {value === "all" ? "Any priority" : PRIORITY[value as ReportPriority].label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
+              {FEATURES.reportPriority && (
+                <>
+                  <DropdownMenuLabel>Priority</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={filters.priority}
+                    onValueChange={(priority) =>
+                      onChange({ priority: priority as Filters["priority"], page: 1 })
+                    }
+                  >
+                    {PRIORITIES.map((value) => (
+                      <DropdownMenuRadioItem key={value} value={value}>
+                        {value === "all" ? "Any priority" : PRIORITY[value as ReportPriority].label}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuLabel>Status</DropdownMenuLabel>
               <DropdownMenuRadioGroup
                 value={filters.status}
@@ -184,36 +213,26 @@ function QueueView({
       </div>
 
       <div className="relative overflow-x-auto">
-        <table aria-labelledby={titleId} className="w-full min-w-260 text-left">
+        <table
+          aria-labelledby={titleId}
+          style={{ minWidth: `${(FULL_MIN_WIDTH_REM * TOTAL_WIDTH) / 100}rem` }}
+          className="w-full text-left"
+        >
+          <colgroup>
+            {COLUMNS.map((column) => (
+              <col
+                key={column.label}
+                style={{ width: `${((column.width / TOTAL_WIDTH) * 100).toFixed(2)}%` }}
+              />
+            ))}
+          </colgroup>
           <thead className="bg-[#f9f9fb] dark:bg-muted/40">
             <tr>
-              <th scope="col" className={cn(head, "w-[9%] pl-8")}>
-                Report ID
-              </th>
-              <th scope="col" className={cn(head, "w-[17%] pl-3")}>
-                Reported User
-              </th>
-              <th scope="col" className={cn(head, "w-[13%]")}>
-                Reporter
-              </th>
-              <th scope="col" className={cn(head, "w-[13%] pl-3")}>
-                Category
-              </th>
-              <th scope="col" className={cn(head, "w-[6%] text-center")}>
-                AI Risk
-              </th>
-              <th scope="col" className={cn(head, "w-[11%] pl-5")}>
-                Priority
-              </th>
-              <th scope="col" className={cn(head, "w-[11%]")}>
-                Submitted
-              </th>
-              <th scope="col" className={cn(head, "w-[12%]")}>
-                Status
-              </th>
-              <th scope="col" className={cn(head, "pr-6 text-right")}>
-                Action
-              </th>
+              {COLUMNS.map((column) => (
+                <th key={column.label} scope="col" className={cn(head, column.className)}>
+                  {column.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40 dark:divide-border">
@@ -271,23 +290,27 @@ function QueueView({
                       {CATEGORY_LABELS[report.category]}
                     </span>
                   </td>
-                  <td className="py-5 text-center">
-                    <span
-                      className={cn(
-                        "inline-flex h-6 min-w-8 items-center justify-center rounded-md px-1.5 text-[13px] font-bold tabular-nums",
-                        riskTone(report.aiRisk),
-                      )}
-                    >
-                      <span className="sr-only">AI risk </span>
-                      {report.aiRisk}
-                    </span>
-                  </td>
-                  <td className={cn("py-5 pl-5", priority.className)}>
-                    <span className="flex items-center gap-2 text-xs font-bold tracking-wide uppercase">
-                      <span aria-hidden className="size-1.5 rounded-full bg-current" />
-                      {priority.label}
-                    </span>
-                  </td>
+                  {FEATURES.aiMetrics && (
+                    <td className="py-5 text-center">
+                      <span
+                        className={cn(
+                          "inline-flex h-6 min-w-8 items-center justify-center rounded-md px-1.5 text-[13px] font-bold tabular-nums",
+                          riskTone(report.aiRisk),
+                        )}
+                      >
+                        <span className="sr-only">AI risk </span>
+                        {report.aiRisk}
+                      </span>
+                    </td>
+                  )}
+                  {FEATURES.reportPriority && (
+                    <td className={cn("py-5 pl-5", priority.className)}>
+                      <span className="flex items-center gap-2 text-xs font-bold tracking-wide uppercase">
+                        <span aria-hidden className="size-1.5 rounded-full bg-current" />
+                        {priority.label}
+                      </span>
+                    </td>
+                  )}
                   <td className="py-5 text-[13px] text-muted-foreground">
                     <time dateTime={report.submittedAt}>{formatAgo(report.submittedAt)}</time>
                   </td>
@@ -309,7 +332,7 @@ function QueueView({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="h-32 text-center text-muted-foreground">
+                <td colSpan={COLUMNS.length} className="h-32 text-center text-muted-foreground">
                   No reports match these filters.
                 </td>
               </tr>
@@ -399,9 +422,11 @@ function RowActions({
         >
           Review report
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => toast("Assigning reports isn't available yet")}>
-          Assign to me
-        </DropdownMenuItem>
+        {FEATURES.reportAssignment && (
+          <DropdownMenuItem onSelect={() => toast("Assigning reports isn't available yet")}>
+            Assign to me
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => toast("Dismissing reports isn't available yet")}>
           Dismiss
