@@ -10,6 +10,7 @@ import { ProfilePreferencesCard } from "@/components/profile/profile-preferences
 import { ProfileSecurityCard } from "@/components/profile/profile-security-card";
 import { ProfileSummaryCard } from "@/components/profile/profile-summary-card";
 import { RecentActivityCard } from "@/components/profile/recent-activity-card";
+import { FEATURES } from "@/constants/features";
 import { SAMPLE_PROFILE_ACTIVITY } from "@/constants/profile-sample";
 import {
   SAMPLE_ADMIN_PROFILE,
@@ -56,7 +57,7 @@ export default function ProfilePage() {
             <AccountDetailsCard profile={SAMPLE_ADMIN_PROFILE} session={currentSession} />
             <ProfileSecurityCard security={SAMPLE_SECURITY} sessions={SAMPLE_SESSIONS} />
           </div>
-          <RecentActivityCard activity={SAMPLE_PROFILE_ACTIVITY} />
+          {FEATURES.auditLog && <RecentActivityCard activity={SAMPLE_PROFILE_ACTIVITY} />}
         </div>
       </div>
       <ProfileActions sessions={SAMPLE_SESSIONS} />

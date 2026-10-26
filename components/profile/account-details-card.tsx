@@ -3,6 +3,7 @@ import { DesktopIcon, DeviceMobileIcon, LaptopIcon } from "@phosphor-icons/react
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { formatDayAndTime } from "@/components/settings/settings-format";
 import { ROLE_TITLES } from "@/components/settings/settings-labels";
+import { FEATURES } from "@/constants/features";
 import type { ActiveSession, AdminProfile } from "@/types/settings";
 
 const DEVICE_ICONS: Record<ActiveSession["kind"], typeof LaptopIcon> = {
@@ -41,22 +42,24 @@ export function AccountDetailsCard({
             <time dateTime={profile.lastLoginAt}>{formatDayAndTime(profile.lastLoginAt)}</time>
           </dd>
         </div>
-        <div>
-          <dt className={label}>Last Login Device</dt>
-          <dd className={`${value} flex items-center gap-2`}>
-            <DeviceIcon
-              aria-hidden
-              weight="bold"
-              className="size-4 shrink-0 text-[#bfc8ce] dark:text-muted-foreground/70"
-            />
-            <span>
-              {session.os}
-              <span aria-hidden> • </span>
-              <span className="sr-only">, </span>
-              {session.browser}
-            </span>
-          </dd>
-        </div>
+        {FEATURES.adminSessions && (
+          <div>
+            <dt className={label}>Last Login Device</dt>
+            <dd className={`${value} flex items-center gap-2`}>
+              <DeviceIcon
+                aria-hidden
+                weight="bold"
+                className="size-4 shrink-0 text-[#bfc8ce] dark:text-muted-foreground/70"
+              />
+              <span>
+                {session.os}
+                <span aria-hidden> • </span>
+                <span className="sr-only">, </span>
+                {session.browser}
+              </span>
+            </dd>
+          </div>
+        )}
       </dl>
     </DashboardCard>
   );

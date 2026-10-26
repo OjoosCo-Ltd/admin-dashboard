@@ -2,13 +2,24 @@ import { BellSimpleIcon, CaretRightIcon, GlobeIcon, PaletteIcon } from "@phospho
 import Link from "next/link";
 
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
+import { enabled } from "@/constants/features";
 
 // Each preference is edited in its Settings section; these rows lead there.
-const PREFERENCES = [
-  { href: "/settings/notifications", label: "Notifications", Icon: BellSimpleIcon },
+const PREFERENCES = enabled([
+  {
+    href: "/settings/notifications",
+    label: "Notifications",
+    Icon: BellSimpleIcon,
+    feature: "notificationPreferences" as const,
+  },
   { href: "/settings/appearance", label: "Appearance", Icon: PaletteIcon },
-  { href: "/settings/language", label: "Language", Icon: GlobeIcon },
-];
+  {
+    href: "/settings/language",
+    label: "Language",
+    Icon: GlobeIcon,
+    feature: "adminPreferences" as const,
+  },
+]);
 
 const glyph = "shrink-0 text-[#bfc8ce] dark:text-muted-foreground/70";
 

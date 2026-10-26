@@ -5,6 +5,7 @@ import { cn } from "cn";
 
 import { SignOutDialog } from "@/components/account/sign-out-dialog";
 import { SignOutSessionsDialog } from "@/components/account/sign-out-sessions-dialog";
+import { FEATURES } from "@/constants/features";
 import type { ActiveSession } from "@/types/settings";
 
 const button =
@@ -14,20 +15,22 @@ const button =
 export function ProfileActions({ sessions }: { sessions: ActiveSession[] }) {
   return (
     <div className="flex flex-col gap-3 border-t border-border/20 pt-8 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-4 dark:border-border">
-      <SignOutSessionsDialog
-        sessions={sessions}
-        trigger={
-          <button
-            type="button"
-            className={cn(
-              button,
-              "border-[#dbe1e5] bg-surface text-foreground hover:bg-muted focus-visible:ring-ring/50 dark:border-border dark:bg-transparent",
-            )}
-          >
-            Sign Out of All Other Sessions
-          </button>
-        }
-      />
+      {FEATURES.adminSessions && (
+        <SignOutSessionsDialog
+          sessions={sessions}
+          trigger={
+            <button
+              type="button"
+              className={cn(
+                button,
+                "border-[#dbe1e5] bg-surface text-foreground hover:bg-muted focus-visible:ring-ring/50 dark:border-border dark:bg-transparent",
+              )}
+            >
+              Sign Out of All Other Sessions
+            </button>
+          }
+        />
+      )}
       <SignOutDialog
         trigger={
           <button

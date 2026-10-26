@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { initials, ROLE_LABELS } from "@/components/settings/settings-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FEATURES } from "@/constants/features";
 import type { AdminProfile } from "@/types/settings";
 
 // "July 2026", in UTC so the server's render and the browser's agree.
@@ -31,14 +32,17 @@ export function ProfileSummaryCard({ profile }: { profile: AdminProfile }) {
             {initials(profile.fullName)}
           </AvatarFallback>
         </Avatar>
-        <Link
-          href="/settings/profile"
-          aria-label="Change profile photo"
-          title="Change profile photo"
-          className="absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 border-card bg-surface text-muted-foreground shadow-[0_1px_3px_rgb(24_28_30/0.12)] outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-muted"
-        >
-          <CameraIcon aria-hidden weight="bold" className="size-4.5" />
-        </Link>
+        {/* Settings › Profile can change the photo only once the backend stores one. */}
+        {FEATURES.adminProfileExtras && (
+          <Link
+            href="/settings/profile"
+            aria-label="Change profile photo"
+            title="Change profile photo"
+            className="absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 border-card bg-surface text-muted-foreground shadow-[0_1px_3px_rgb(24_28_30/0.12)] outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-muted"
+          >
+            <CameraIcon aria-hidden weight="bold" className="size-4.5" />
+          </Link>
+        )}
       </div>
 
       <h2 className="mt-5 text-xl leading-7 font-semibold">{profile.fullName}</h2>

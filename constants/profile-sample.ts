@@ -1,3 +1,4 @@
+import { FEATURES } from "@/constants/features";
 import type { ProfileActivity } from "@/types/profile";
 
 /**
@@ -10,7 +11,10 @@ export const SAMPLE_PROFILE_ACTIVITY: ProfileActivity[] = [
     id: "activity-plans",
     at: "2026-10-18T10:15:00Z",
     action: "Updated subscription settings for",
-    target: { label: "the Elite plan", href: "/subscriptions" },
+    target: {
+      label: "the Elite plan",
+      href: FEATURES.subscriptions ? "/subscriptions" : undefined,
+    },
   },
   {
     id: "activity-event",
