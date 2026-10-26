@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LockSimpleIcon, ShieldCheckIcon } from "@phosphor-icons/react";
+import { cn } from "cn";
 import { useEffect, useId, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -14,17 +15,21 @@ import { SettingsCard } from "@/components/settings/settings-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { FEATURES } from "@/constants/features";
 import type { AdminProfile } from "@/types/settings";
 
 const PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 
+const phone = z
+  .string()
+  .trim()
+  .regex(/^\+?[\d\s()-]{7,20}$/, "Enter a phone number like +44 7700 900000");
+
 const schema = z.object({
   fullName: z.string().trim().min(1, "Enter your full name").max(80, "Keep it under 80 characters"),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^\+?[\d\s()-]{7,20}$/, "Enter a phone number like +44 7700 900000"),
+  // A hidden field can't show its error, so it's only checked while it's shown.
+  phone: FEATURES.adminProfileExtras ? phone : z.string(),
 });
 
 type ProfileValues = z.infer<typeof schema>;
@@ -113,26 +118,28 @@ export function ProfileSettings({ profile }: { profile: AdminProfile }) {
               Contact IT support to change your primary admin email.
             </p>
           </div>
-          <Controller
-            name="phone"
-            control={form.control}
-            render={({ field: phone, fieldState }) => (
-              <div className="flex flex-col gap-2">
-                <label htmlFor={`${formId}-phone`} className={label}>
-                  Phone Number
-                </label>
-                <Input
-                  {...phone}
-                  id={`${formId}-phone`}
-                  type="tel"
-                  autoComplete="tel"
-                  aria-invalid={fieldState.invalid}
-                  className={field}
-                />
-                <FieldError errors={[fieldState.error]} />
-              </div>
-            )}
-          />
+          {FEATURES.adminProfileExtras && (
+            <Controller
+              name="phone"
+              control={form.control}
+              render={({ field: phone, fieldState }) => (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor={`${formId}-phone`} className={label}>
+                    Phone Number
+                  </label>
+                  <Input
+                    {...phone}
+                    id={`${formId}-phone`}
+                    type="tel"
+                    autoComplete="tel"
+                    aria-invalid={fieldState.invalid}
+                    className={field}
+                  />
+                  <FieldError errors={[fieldState.error]} />
+                </div>
+              )}
+            />
+          )}
           <div className="flex flex-col gap-2">
             <span className={label}>Assigned Role</span>
             <span className="flex w-fit items-center gap-1.5 rounded bg-info-soft px-2 py-1 text-xs font-semibold text-[#00546e] dark:bg-action/30 dark:text-primary">
@@ -203,8 +210,15 @@ function PhotoField({
     onChange({ url: URL.createObjectURL(file), local: true });
   };
 
+  const editable = FEATURES.adminProfileExtras;
+
   return (
-    <div className="flex flex-wrap items-start gap-x-6 gap-y-5 pt-12 pb-16">
+    <div
+      className={cn(
+        "flex flex-wrap gap-x-6 gap-y-5 pt-12 pb-16",
+        editable ? "items-start" : "items-center",
+      )}
+    >
       <Avatar className="size-24 shadow-[0_2px_8px_rgb(0_0_0/0.15)]">
         {photo && <AvatarImage src={photo.url} alt="" />}
         <AvatarFallback className="bg-action-soft text-2xl font-semibold text-action">
@@ -212,49 +226,53 @@ function PhotoField({
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <h4 id={titleId} className="mt-2 text-base font-medium">
+        <h4 id={titleId} className={cn("text-base font-medium", editable && "mt-2")}>
           Profile Picture
         </h4>
-        <p className="mt-2 max-w-80 text-[13px] leading-[18px] text-muted-foreground">
-          Upload a high-resolution image to represent your administrative identity across the
-          platform.
-        </p>
-        <div className="mt-4 flex items-center gap-7">
-          <input
-            ref={inputRef}
-            type="file"
-            accept={PHOTO_TYPES.join(",")}
-            aria-labelledby={titleId}
-            className="sr-only"
-            tabIndex={-1}
-            onChange={(event) => {
-              pick(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="h-8.5 rounded-lg border border-[#dbe1e5] bg-surface px-4 text-[13px] font-semibold tracking-wide whitespace-nowrap outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-border dark:bg-muted/40"
-          >
-            Change Photo
-          </button>
-          <button
-            type="button"
-            disabled={!photo}
-            onClick={() => {
-              setError(null);
-              onChange(null);
-            }}
-            className="rounded-sm text-[13px] font-semibold tracking-wide text-destructive outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 disabled:hover:no-underline"
-          >
-            Remove
-          </button>
-        </div>
-        {error && (
-          <p role="alert" className="mt-2 text-sm text-destructive">
-            {error}
-          </p>
+        {editable && (
+          <>
+            <p className="mt-2 max-w-80 text-[13px] leading-[18px] text-muted-foreground">
+              Upload a high-resolution image to represent your administrative identity across the
+              platform.
+            </p>
+            <div className="mt-4 flex items-center gap-7">
+              <input
+                ref={inputRef}
+                type="file"
+                accept={PHOTO_TYPES.join(",")}
+                aria-labelledby={titleId}
+                className="sr-only"
+                tabIndex={-1}
+                onChange={(event) => {
+                  pick(event.target.files?.[0]);
+                  event.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="h-8.5 rounded-lg border border-[#dbe1e5] bg-surface px-4 text-[13px] font-semibold tracking-wide whitespace-nowrap outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-border dark:bg-muted/40"
+              >
+                Change Photo
+              </button>
+              <button
+                type="button"
+                disabled={!photo}
+                onClick={() => {
+                  setError(null);
+                  onChange(null);
+                }}
+                className="rounded-sm text-[13px] font-semibold tracking-wide text-destructive outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 disabled:hover:no-underline"
+              >
+                Remove
+              </button>
+            </div>
+            {error && (
+              <p role="alert" className="mt-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

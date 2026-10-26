@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FEATURES } from "@/constants/features";
 import type { AdminMember, AdminRole, RoleSummary } from "@/types/settings";
 
 const ROLE_PILLS: Record<AdminRole, string> = {
@@ -183,7 +184,10 @@ export function TeamSettings({
         </h3>
         <dl className="mt-4 grid divide-y divide-border/40 max-xl:sm:grid-cols-2 max-xl:sm:gap-x-6 max-xl:sm:divide-y-0 dark:divide-border">
           {roles.map((role) => (
-            <div key={role.role} className="py-3.5 first:pt-0">
+            <div
+              key={role.role}
+              className={cn("py-3.5 first:pt-0", !FEATURES.rolePermissions && "last:pb-0")}
+            >
               <dt className="flex items-baseline justify-between gap-2">
                 <span className="text-[13px] font-semibold tracking-wide">
                   {ROLE_LABELS[role.role]}
@@ -196,12 +200,14 @@ export function TeamSettings({
             </div>
           ))}
         </dl>
-        <Link
-          href="/settings/permissions"
-          className="mt-3 flex min-h-14 items-center justify-center rounded-lg border border-[#dbe1e5] px-4 py-2 text-center text-[13px] font-semibold tracking-wide outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-border"
-        >
-          Manage Custom Roles
-        </Link>
+        {FEATURES.rolePermissions && (
+          <Link
+            href="/settings/permissions"
+            className="mt-3 flex min-h-14 items-center justify-center rounded-lg border border-[#dbe1e5] px-4 py-2 text-center text-[13px] font-semibold tracking-wide outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-border"
+          >
+            Manage Custom Roles
+          </Link>
+        )}
       </SettingsCard>
     </div>
   );
@@ -219,7 +225,7 @@ function AdminActions({ admin }: { admin: AdminMember }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onSelect={notYet("Changing roles")}>Change role</DropdownMenuItem>
-        {admin.status === "pending" && (
+        {FEATURES.adminInvites && admin.status === "pending" && (
           <DropdownMenuItem onSelect={notYet("Resending invitations")}>
             Resend invitation
           </DropdownMenuItem>

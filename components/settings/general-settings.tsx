@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WarningIcon } from "@phosphor-icons/react";
+import { cn } from "cn";
 import { useId } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { FEATURES } from "@/constants/features";
 import { LANGUAGES, TIMEZONES } from "@/constants/regional";
 import type { PlatformSettings, PlatformStatus } from "@/types/settings";
 
@@ -74,120 +76,122 @@ export function GeneralSettings({
 
   return (
     <div className="flex flex-col gap-6">
-      <SettingsCard aria-labelledby={`${formId}-title`} className="overflow-hidden">
-        <div className="border-b border-border/40 bg-surface px-6 py-6 dark:border-border dark:bg-muted/40">
-          <h3 id={`${formId}-title`} className="text-xl leading-7 font-semibold">
-            Platform Information
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage global settings and regional configurations for your Xparience instance.
-          </p>
-        </div>
-        <form
-          id={formId}
-          method="post"
-          onSubmit={onSubmit}
-          noValidate
-          className="flex flex-col gap-6 px-6 pt-7 pb-6"
-        >
-          <div className="grid gap-6 sm:grid-cols-2">
-            <Controller
-              name="name"
-              control={form.control}
-              render={({ field: name, fieldState }) => (
-                <div className="flex flex-col gap-2">
-                  <label htmlFor={`${formId}-name`} className={label}>
-                    Platform Name
-                  </label>
-                  <Input
-                    {...name}
-                    id={`${formId}-name`}
-                    aria-invalid={fieldState.invalid}
-                    className={`${field} h-9.5`}
-                  />
-                  <FieldError errors={[fieldState.error]} />
-                </div>
-              )}
-            />
-            <Controller
-              name="supportEmail"
-              control={form.control}
-              render={({ field: email, fieldState }) => (
-                <div className="flex flex-col gap-2">
-                  <label htmlFor={`${formId}-email`} className={label}>
-                    Support Email
-                  </label>
-                  <Input
-                    {...email}
-                    id={`${formId}-email`}
-                    type="email"
-                    aria-invalid={fieldState.invalid}
-                    className={`${field} h-9.5`}
-                  />
-                  <FieldError errors={[fieldState.error]} />
-                </div>
-              )}
-            />
+      {FEATURES.platformSettings && (
+        <SettingsCard aria-labelledby={`${formId}-title`} className="overflow-hidden">
+          <div className="border-b border-border/40 bg-surface px-6 py-6 dark:border-border dark:bg-muted/40">
+            <h3 id={`${formId}-title`} className="text-xl leading-7 font-semibold">
+              Platform Information
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage global settings and regional configurations for your Xparience instance.
+            </p>
           </div>
-          <Controller
-            name="description"
-            control={form.control}
-            render={({ field: description, fieldState }) => (
-              <div className="flex flex-col gap-2">
-                <label htmlFor={`${formId}-description`} className={label}>
-                  Platform Description
-                </label>
-                <Textarea
-                  {...description}
-                  id={`${formId}-description`}
-                  aria-invalid={fieldState.invalid}
-                  className={`${field} field-sizing-fixed h-19.5 min-h-0 resize-none py-2.5`}
-                />
-                <FieldError errors={[fieldState.error]} />
-              </div>
-            )}
-          />
-          <hr className="border-border/40 dark:border-border" />
-          <div className="grid gap-6 sm:grid-cols-3">
-            {selects.map((item) => (
+          <form
+            id={formId}
+            method="post"
+            onSubmit={onSubmit}
+            noValidate
+            className="flex flex-col gap-6 px-6 pt-7 pb-6"
+          >
+            <div className="grid gap-6 sm:grid-cols-2">
               <Controller
-                key={item.name}
-                name={item.name}
+                name="name"
                 control={form.control}
-                render={({ field: select }) => (
+                render={({ field: name, fieldState }) => (
                   <div className="flex flex-col gap-2">
-                    <span id={`${formId}-${item.name}`} className={label}>
-                      {item.title}
-                    </span>
-                    <Select value={select.value} onValueChange={select.onChange}>
-                      <SelectTrigger
-                        aria-labelledby={`${formId}-${item.name}`}
-                        className={`${field} h-9.5 w-full data-[size=default]:h-9.5 [&_svg:not([class*='size-'])]:size-5`}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent position="popper">
-                        {item.options.map((option) => (
-                          <SelectItem key={option.value} value={option.value} className="text-sm">
-                            <span lang={"lang" in option ? option.lang : undefined}>
-                              {option.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <label htmlFor={`${formId}-name`} className={label}>
+                      Platform Name
+                    </label>
+                    <Input
+                      {...name}
+                      id={`${formId}-name`}
+                      aria-invalid={fieldState.invalid}
+                      className={`${field} h-9.5`}
+                    />
+                    <FieldError errors={[fieldState.error]} />
                   </div>
                 )}
               />
-            ))}
+              <Controller
+                name="supportEmail"
+                control={form.control}
+                render={({ field: email, fieldState }) => (
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor={`${formId}-email`} className={label}>
+                      Support Email
+                    </label>
+                    <Input
+                      {...email}
+                      id={`${formId}-email`}
+                      type="email"
+                      aria-invalid={fieldState.invalid}
+                      className={`${field} h-9.5`}
+                    />
+                    <FieldError errors={[fieldState.error]} />
+                  </div>
+                )}
+              />
+            </div>
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field: description, fieldState }) => (
+                <div className="flex flex-col gap-2">
+                  <label htmlFor={`${formId}-description`} className={label}>
+                    Platform Description
+                  </label>
+                  <Textarea
+                    {...description}
+                    id={`${formId}-description`}
+                    aria-invalid={fieldState.invalid}
+                    className={`${field} field-sizing-fixed h-19.5 min-h-0 resize-none py-2.5`}
+                  />
+                  <FieldError errors={[fieldState.error]} />
+                </div>
+              )}
+            />
+            <hr className="border-border/40 dark:border-border" />
+            <div className="grid gap-6 sm:grid-cols-3">
+              {selects.map((item) => (
+                <Controller
+                  key={item.name}
+                  name={item.name}
+                  control={form.control}
+                  render={({ field: select }) => (
+                    <div className="flex flex-col gap-2">
+                      <span id={`${formId}-${item.name}`} className={label}>
+                        {item.title}
+                      </span>
+                      <Select value={select.value} onValueChange={select.onChange}>
+                        <SelectTrigger
+                          aria-labelledby={`${formId}-${item.name}`}
+                          className={`${field} h-9.5 w-full data-[size=default]:h-9.5 [&_svg:not([class*='size-'])]:size-5`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {item.options.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="text-sm">
+                              <span lang={"lang" in option ? option.lang : undefined}>
+                                {option.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                />
+              ))}
+            </div>
+          </form>
+          <div className="flex justify-end border-t border-border/40 bg-surface px-6 py-6 dark:border-border dark:bg-muted/40">
+            <SaveButton form={formId}>Save Changes</SaveButton>
           </div>
-        </form>
-        <div className="flex justify-end border-t border-border/40 bg-surface px-6 py-6 dark:border-border dark:bg-muted/40">
-          <SaveButton form={formId}>Save Changes</SaveButton>
-        </div>
-      </SettingsCard>
+        </SettingsCard>
+      )}
 
-      <div className="grid items-start gap-6 md:grid-cols-2">
+      <div className={cn("grid items-start gap-6", FEATURES.platformSettings && "md:grid-cols-2")}>
         <SettingsCard aria-labelledby={`${formId}-status`} className="px-6 pt-6 pb-4">
           <h3 id={`${formId}-status`} className="text-xl leading-7 font-semibold">
             Platform Status
@@ -215,7 +219,7 @@ export function GeneralSettings({
           </dl>
         </SettingsCard>
 
-        <MaintenanceCard />
+        {FEATURES.platformSettings && <MaintenanceCard />}
       </div>
     </div>
   );

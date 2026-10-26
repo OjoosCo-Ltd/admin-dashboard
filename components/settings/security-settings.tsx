@@ -8,12 +8,14 @@ import {
   ShieldCheckIcon,
 } from "@phosphor-icons/react/ssr";
 import type { Icon } from "@phosphor-icons/react";
+import { cn } from "cn";
 import type { ReactNode } from "react";
 
 import { SignOutSessionsDialog } from "@/components/account/sign-out-sessions-dialog";
 import { ToastButton } from "@/components/dashboard/toast-button";
 import { formatDayAndTime, formatTimeAgo } from "@/components/settings/settings-format";
 import { SettingsCard } from "@/components/settings/settings-section";
+import { FEATURES } from "@/constants/features";
 import type { ActiveSession, SecuritySummary } from "@/types/settings";
 
 const DEVICE_ICONS: Record<ActiveSession["kind"], Icon> = {
@@ -34,10 +36,10 @@ function IconTitle({
   icon: ReactNode;
   title: string;
   badge?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-4">
+    <div className={cn("flex gap-4", children ? "items-start" : "items-center")}>
       <span
         aria-hidden
         className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#eef6fa] text-action dark:bg-action/25 dark:text-primary [&_svg]:size-6"
@@ -49,7 +51,7 @@ function IconTitle({
           <h3 className="text-xl leading-7 font-bold">{title}</h3>
           {badge}
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">{children}</p>
+        {children && <p className="mt-1 text-sm text-muted-foreground">{children}</p>}
       </div>
     </div>
   );
@@ -63,22 +65,20 @@ export function SecuritySettings({
   security: SecuritySummary;
   sessions: ActiveSession[];
 }) {
-  return (
-    <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-      <div className="flex flex-col gap-6">
-        <SettingsCard className="p-6">
-          <IconTitle icon={<KeyIcon weight="bold" />} title="Password">
-            Last changed: {formatTimeAgo(security.passwordChangedAt)}
-          </IconTitle>
-          {/* UI only: no password change flow for signed-in admins yet. */}
-          <ToastButton
-            message="Changing your password isn't available yet"
-            className={outlineButton}
-          >
-            Change Password
-          </ToastButton>
-        </SettingsCard>
+  const cards = (
+    <>
+      <SettingsCard className="p-6">
+        <IconTitle icon={<KeyIcon weight="bold" />} title="Password">
+          {FEATURES.adminProfileExtras &&
+            `Last changed: ${formatTimeAgo(security.passwordChangedAt)}`}
+        </IconTitle>
+        {/* UI only: no password change flow for signed-in admins yet. */}
+        <ToastButton message="Changing your password isn't available yet" className={outlineButton}>
+          Change Password
+        </ToastButton>
+      </SettingsCard>
 
+      {FEATURES.mfa && (
         <SettingsCard className="p-6">
           <IconTitle
             icon={<ShieldCheckIcon weight="bold" />}
@@ -98,24 +98,41 @@ export function SecuritySettings({
             Manage 2FA
           </ToastButton>
         </SettingsCard>
+      )}
 
-        <SettingsCard className="px-6 pt-6 pb-4">
-          <h3 className="flex items-center gap-2.5 text-base font-bold">
-            <ClockCounterClockwiseIcon aria-hidden weight="bold" className="size-5" />
-            Login History
-          </h3>
-          <dl className="mt-3 divide-y divide-border/40 text-sm dark:divide-border">
+      <SettingsCard className="px-6 pt-6 pb-4">
+        <h3 className="flex items-center gap-2.5 text-base font-bold">
+          <ClockCounterClockwiseIcon aria-hidden weight="bold" className="size-5" />
+          Login History
+        </h3>
+        <dl className="mt-3 divide-y divide-border/40 text-sm dark:divide-border">
+          {FEATURES.adminSessions && (
             <div className="flex items-center justify-between gap-4 py-3">
               <dt className="text-muted-foreground">Failed Login Attempts</dt>
               <dd className="font-bold tabular-nums">{security.failedLoginAttempts}</dd>
             </div>
-            <div className="flex items-center justify-between gap-4 py-3">
-              <dt className="text-muted-foreground">Last Successful Login</dt>
-              <dd>{formatDayAndTime(security.lastSuccessfulLoginAt)}</dd>
-            </div>
-          </dl>
-        </SettingsCard>
+          )}
+          <div className="flex items-center justify-between gap-4 py-3">
+            <dt className="text-muted-foreground">Last Successful Login</dt>
+            <dd>{formatDayAndTime(security.lastSuccessfulLoginAt)}</dd>
+          </div>
+        </dl>
+      </SettingsCard>
+    </>
+  );
+
+  // Without the sessions table, the other cards share one row instead of a column beside it.
+  if (!FEATURES.adminSessions) {
+    return (
+      <div className={cn("grid gap-6", FEATURES.mfa ? "lg:grid-cols-3" : "md:grid-cols-2")}>
+        {cards}
       </div>
+    );
+  }
+
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className="flex flex-col gap-6">{cards}</div>
 
       <SettingsCard className="flex flex-col overflow-hidden lg:min-h-full">
         <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-6">

@@ -4,8 +4,18 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { FEATURES } from "@/constants/features";
 
 export const metadata: Metadata = { title: { template: "%s · Settings", default: "Settings" } };
+
+// Names only the sections on show: Notifications waits on its preferences route.
+const TOPICS = [
+  "your administrator account",
+  "security",
+  "team access",
+  FEATURES.notificationPreferences && "notifications",
+  "Xparience platform configuration",
+].filter((topic) => typeof topic === "string");
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   return (
@@ -16,8 +26,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
             Settings
           </h1>
           <p className="mt-2 text-base leading-6 text-muted-foreground">
-            Manage your administrator account, security, team access, notifications, and Xparience
-            platform configuration.
+            Manage {new Intl.ListFormat("en-US").format(TOPICS)}.
           </p>
         </div>
         <Link
